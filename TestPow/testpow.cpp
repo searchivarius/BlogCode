@@ -12,8 +12,7 @@ using namespace std;
 #include "ztimer.h"
 
 template <class T>
-T __attribute__((always_inline))
-PowOptimPosExp0(T Base, unsigned Exp) {
+T PowOptimPosExp0(T Base, unsigned Exp) {
     if (Exp == 0) return 1;
     if (Exp == 1) return Base; 
     --Exp;
@@ -98,7 +97,19 @@ T PowOptimPosExp1(T Base, unsigned Exp) {
     if (Exp == 8) {
         return res;
     }
+#if 1
+    Exp -= 8;
 
+    while (true) {
+        if (Exp & 1) res *= Base;
+        Exp >>= 1;
+        if (Exp) {
+            Base *= Base;
+        } else {
+            return res;
+        }
+    }
+#else
     if (Exp % 2) {
         Exp -= 9;
         res *= Base;
@@ -118,8 +129,33 @@ T PowOptimPosExp1(T Base, unsigned Exp) {
         Exp >>= 1;
 
     }
+#endif
 
     return res;
+};
+
+template <class T>
+T PowOptimPosExp2(T Base, unsigned Exp) {
+    T Base2 = Base * Base;
+    T Base4 = Base2 * Base2;
+    T Base8 = Base4 * Base4;
+    T res   = 1;
+
+label:
+        if (Exp == 0) return res;
+        if (Exp == 1) return res * Base; 
+        if (Exp == 2) return res * Base2;
+        if (Exp == 3) return res * Base2 * Base;
+        if (Exp == 4) return res * Base4;
+        if (Exp == 5) return res * Base4 * Base;
+        if (Exp == 6) return res * Base4 * Base2;
+        if (Exp == 7) return res * Base4 * Base2 * Base;
+
+        res *= Base8;
+        Exp -= 8;
+goto label;
+
+    return 0.0;
 };
 
 using namespace std;
@@ -208,6 +244,33 @@ void testIntPowOptim1(int IntExp, int N, int rep) {
 }
 
 template <class T>
+void testIntPowOptim2(int IntExp, int N, int rep) {
+    vector<T>   data(N*4);
+
+    for (int i = 0; i < 4*N; ++i) {
+        data[i] = 1 + (rand() % 10000) / 1000.0;
+    }
+
+    WallClockTimer timer;
+    T sum = 0;
+    for (int j = 0; j < rep; ++j) {
+        for (int i = 0; i < N*4; i+=4) {
+            sum += PowOptimPosExp2(data[i],   IntExp); 
+            sum += PowOptimPosExp2(data[i+1], IntExp); 
+            sum += PowOptimPosExp2(data[i+2], IntExp); 
+            sum += PowOptimPosExp2(data[i+3], IntExp); 
+        }
+    }
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << "Ignore: " << sum << endl;
+    cout << "Pows (optimized2) computed, degree: " << IntExp << " TotalQty: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
+    cout << "Milllions of integer (optimized2) Pows per sec: " << (float(TotalQty) / t) << endl;
+    
+}
+
+template <class T>
 void testIntPow(int IntExp, int N, int rep) {
     vector<T>   data(N*4);
 
@@ -240,18 +303,25 @@ int main() {
             float v1 = pow(a, i);
             float v2 = PowOptimPosExp0(a, i);
             float v3 = PowOptimPosExp1(a, i);
+            float v4 = PowOptimPosExp2(a, i);
     
             
             if (v2 < 1 || fabs(v1/v2 - 1) > 1e-5) {
-                cerr << "Bug0 in the PowOptimPosExp! Exponent " << i  << endl;
+                cerr << "Bug0 in the PowOptimPosExp0! Exponent " << i  << endl;
                 cerr <<  v1 << " -> " <<  v2 << " " << fabs(v1/v2 - 1) << endl;
                 return 1;
             }
             if (v3 < 1 || fabs(v1/v3 - 1) > 1e-5) {
-                cerr << "Bug1 in the PowOptimPosExp! Exponent " << i  << endl;
+                cerr << "Bug1 in the PowOptimPosExp1! Exponent " << i  << endl;
                 cerr <<  v1 << " -> " <<  v3 << " " << fabs(v1/v3 - 1) << endl;
                 return 1;
             }
+            if (v4 < 1 || fabs(v1/v4 - 1) > 1e-5) {
+                cerr << "Bug2 in the PowOptimPosExp2! Exponent " << i  << endl;
+                cerr <<  v1 << " -> " <<  v4 << " " << fabs(v1/v4 - 1) << endl;
+                return 1;
+            }
+   
         }
     }
     cout << "=== Testing generic (not necessarily integer exponents) ===" << endl;
@@ -270,6 +340,9 @@ int main() {
     for (int i = 0; i < 12; ++i) {
         testIntPowOptim1<float>(i, 10000, 200);
     }
+    for (int i = 0; i < 12; ++i) {
+        testIntPowOptim2<float>(i, 10000, 200);
+    }
 
     cout << "=== double base, integer exponent ====" << endl;
 
@@ -281,6 +354,9 @@ int main() {
     }
     for (int i = 0; i < 12; ++i) {
         testIntPowOptim1<double>(i, 10000, 200);
+    }
+    for (int i = 0; i < 12; ++i) {
+        testIntPowOptim2<double>(i, 10000, 200);
     }
 
 
@@ -294,6 +370,9 @@ int main() {
     }
     for (int i = 0; i < 12; ++i) {
         testIntPowOptim1<long double>(i, 10000, 200);
+    }
+    for (int i = 0; i < 12; ++i) {
+        testIntPowOptim2<long double>(i, 10000, 200);
     }
 
 }
