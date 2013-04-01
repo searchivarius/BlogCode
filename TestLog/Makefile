@@ -2,4 +2,4 @@ all: *.cpp
 	$(CXX) -I.. -O3 testlog.cpp -o testlog
 
 clean:
-	rm testlog
+	rm -f testlog

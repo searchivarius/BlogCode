@@ -29,7 +29,7 @@ void testExp(int N, int rep) {
     }
     timer.split();
     uint64_t t = timer.elapsed();
-    uint64_t TotalQty = rep * N * 4;
+    uint64_t TotalQty = uint64_t(rep) * N * 4LL;
     cout << "Ignore: " << sum << endl;
     cout << "Exps computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
     cout << "Milllions of Exps per sec: " << (float(TotalQty) / t) << endl;
