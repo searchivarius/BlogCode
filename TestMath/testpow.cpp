@@ -5,11 +5,9 @@
  * (c) Leonid Boytsov, http://boytsov.info
  */
 
-#include <stdexcept>
+#include "cmn.h"
 
 using namespace std;
-
-#include "ztimer.h"
 
 const unsigned MaxPow = 32;
 
@@ -392,6 +390,8 @@ void testIntPowExplicitTemplate(int IntExp, int N, int rep) {
 }
 
 int main() {
+    SetHighAccuracy();
+
     for (float a = 1.1 ; a <= 2; a+= 0.1) {
         for (int i = 0; i < MaxPow; ++i) {
             float v1 = pow(a, i);

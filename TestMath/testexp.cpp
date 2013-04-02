@@ -5,7 +5,7 @@
  * (c) Leonid Boytsov, http://boytsov.info
  */
 
-#include "ztimer.h"
+#include "cmn.h"
 
 using namespace std;
 
@@ -37,6 +37,7 @@ void testExp(int N, int rep) {
 }
 
 int main() {
+    SetHighAccuracy();
     testExp<float>(10000, 2000);
     testExp<double>(10000, 2000);
     testExp<long double>(10000, 2000);

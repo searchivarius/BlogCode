@@ -1,17 +1,19 @@
 BINS=testexp testlog testpow testroot testtrigon
 
-CXXFLAGS += -I..
+CXXFLAGS+=-I..  -static -O3
 
 all: $(BINS)
 
-testpow: 
-	$(CXX) -I.. -O3 testpow.cpp -o testpow
-testlog: 
-	$(CXX) -I.. -O3 testlog.cpp -o testlog
-testroot: 
-	$(CXX) -I.. -O3 testroot.cpp -o testroot
-testtrigon: 
-	$(CXX) -I.. -O3 testtrigon.cpp -o testtrigon
+testpow: testpow.o
+	$(CXX) testpow.o -o testpow -static
+testexp: testexp.o
+	$(CXX) testexp.o -o testexp -static
+testlog: testlog.o
+	$(CXX) testlog.o -o testlog -static
+testroot: testroot.o
+	$(CXX) testroot.o -o testroot -static
+testtrigon: testtrigon.o
+	$(CXX) testtrigon.o -o testtrigon -static
 
 clean:
-	rm -f $(BINS)
+	rm -f $(BINS) *.o

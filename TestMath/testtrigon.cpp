@@ -5,7 +5,7 @@
  * (c) Leonid Boytsov, http://boytsov.info
  */
 
-#include "ztimer.h"
+#include "cmn.h"
 
 using namespace std;
 
@@ -91,6 +91,7 @@ void testAtan(int N, int rep) {
 }
 
 int main() {
+    SetHighAccuracy();
     testSin<float>(10000, 2000);
     testSin<double>(10000, 2000);
     testSin<long double>(10000, 2000);
