@@ -13,50 +13,22 @@ const unsigned MaxPow = 32;
 
 template <class T>
 T PowOptimPosExp0(T Base, unsigned Exp) {
-    if (Exp == 0) return 1;
-    if (Exp == 1) return Base; 
-    --Exp;
+    if (!Exp) return 1;
     T res = Base;
 
-    #undef  STEP
-    #define STEP if (Exp & 1) res *= Base; Base *= Base; Exp >>= 1; 
+    --Exp;
 
-    if (Exp <= 2) {
-        STEP
+    while (Exp) {
         if (Exp & 1) res *= Base;
-    } else if (Exp <= 4) {
-        STEP
-        STEP
-        if (Exp & 1) res *= Base;
-    } else if (Exp <= 8) {
-        STEP
-        STEP
-        STEP
-        if (Exp & 1) res *= Base;
-    } else if (Exp <= 16) {
-        STEP
-        STEP
-        STEP
-        STEP
-        if (Exp & 1) res *= Base;
-    } else if (Exp <= 32) {
-        STEP
-        STEP
-        STEP
-        STEP
-        STEP
-        if (Exp & 1) res *= Base;
-    } else {
-        while (Exp) {
-            if (Exp & 1) res *= Base;
-            //res *= (1 + (Base - 1)*(Exp & 1));
-            Base *= Base;
-            Exp >>= 1;
-        }
-    }
+
+        Base *= Base;
+        Exp >>= 1;
+
+    };
 
     return res;
 };
+
 
 template <class T>
 T PowOptimPosExp1(T Base, unsigned Exp) {
@@ -227,12 +199,13 @@ using namespace std;
 
 template <class T>
 void testPow(int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data1(N*4);
     vector<T>   data2(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
-        data1[i] = 1 + (rand() % 10000) / 1000.0;
-        data2[i] = 1 + (rand() % 10000) / 1000.0;
+        data1[i] = 1 + (rand() % 10000) / 10.0;
+        data2[i] = 1 + (rand() % 10000) / 10.0;
     }
 
     WallClockTimer timer;
@@ -256,6 +229,7 @@ void testPow(int N, int rep) {
 
 template <class T>
 void testIntPowOptim0(int IntExp, int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
@@ -283,6 +257,7 @@ void testIntPowOptim0(int IntExp, int N, int rep) {
 
 template <class T>
 void testIntPowOptim1(int IntExp, int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
@@ -310,6 +285,7 @@ void testIntPowOptim1(int IntExp, int N, int rep) {
 
 template <class T>
 void testIntPowOptim2(int IntExp, int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
@@ -337,6 +313,7 @@ void testIntPowOptim2(int IntExp, int N, int rep) {
 
 template <class T>
 void testIntPow(int IntExp, int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
@@ -364,6 +341,7 @@ void testIntPow(int IntExp, int N, int rep) {
 
 template <class T>
 void testIntPowExplicitTemplate(int IntExp, int N, int rep) {
+    cout << "================================ " << endl;
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
