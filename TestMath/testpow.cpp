@@ -374,18 +374,18 @@ void testIntPowExplicitTemplate(int IntExp, int N, int rep) {
     T sum = 0;
     for (int j = 0; j < rep; ++j) {
         for (int i = 0; i < N*4; i+=4) {
-            sum += pow<T,unsigned>(data[i],   IntExp); 
-            sum += pow<T,unsigned>(data[i+1], IntExp); 
-            sum += pow<T,unsigned>(data[i+2], IntExp); 
-            sum += pow<T,unsigned>(data[i+3], IntExp); 
+            sum += pow(data[i],   (unsigned)IntExp); 
+            sum += pow(data[i+1], (unsigned)IntExp); 
+            sum += pow(data[i+2], (unsigned)IntExp); 
+            sum += pow(data[i+3], (unsigned)IntExp); 
         }
     }
     timer.split();
     uint64_t t = timer.elapsed();
     uint64_t TotalQty = rep * N * 4;
     cout << "Ignore: " << sum << endl;
-    cout << "Pows (expl template) computed, degree: " << IntExp << " TotalQty: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
-    cout << "Milllions of integer Pows (expl template) per sec: " << (float(TotalQty) / t) << endl;
+    cout << "Pows (expl arguments) computed, degree: " << IntExp << " TotalQty: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
+    cout << "Milllions of integer Pows (expl arguments) per sec: " << (float(TotalQty) / t) << endl;
     
 }
 
