@@ -11,3 +11,5 @@ Various tests (in C++) language.
 
     make -f Makefile.icc
               
+2.  BenchCPUCores -- a stupid code to get the number of cores empirically.  Compile the code (type make) and execute ./bench.sh with the large parameter N. This runs the compiled binary using different number of threads, each of which carries out a task. While the number of threads does not exceed the number of actual cores, the run-time remains constant. When, you see the increase in the run-time, the number of threads outgrew the number of actual cores. The parameter N should be chosen so that it is larger than the number of actual cores. For example:
+./bench.sh 1024 
