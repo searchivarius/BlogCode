@@ -14,7 +14,7 @@ void testDiv(int N, int rep) {
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
-        data[i] = 1 + (rand() % 10000) / 1000.0;
+        data[i] = 1 + (rand() % 100000000) / 1000.0;
     }
 
     WallClockTimer timer;
@@ -45,7 +45,7 @@ void testMult(int N, int rep) {
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
-        data[i] = 1 + (rand() % 10000) / 1000.0;
+        data[i] = 1 + (rand() % 100000000) / 1000.0;
     }
 
     WallClockTimer timer;
