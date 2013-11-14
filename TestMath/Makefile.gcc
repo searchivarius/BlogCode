@@ -1,4 +1,4 @@
-BINS=testexp testlog testpow testroot testtrigon
+BINS=testexp testlog testpow testroot testtrigon testdiv
 
 CXXFLAGS+=-I..  -static -O3
 
@@ -14,6 +14,8 @@ testroot: testroot.o
 	$(CXX) testroot.o -o testroot -static
 testtrigon: testtrigon.o
 	$(CXX) testtrigon.o -o testtrigon -static
+testdiv: testdiv.o
+	$(CXX) testdiv.o -o testdiv -static -mkl
 
 clean:
 	rm -f $(BINS) *.o
