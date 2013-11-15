@@ -1,7 +1,7 @@
 # You may need to point it to the correct location
 # of the Intel compiler binary.
 CXX=/opt/intel/bin/icpc
-BINS=testexp testlog testpow testroot testtrigon
+BINS=testexp testlog testpow testroot testtrigon testdiv
 
 CXXFLAGS+=-I.. -mkl  -O3
 
