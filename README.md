@@ -8,7 +8,7 @@ Various tests (in C++) language.
 
     make -f Makefile.gcc
 
-    To build with the Intel compiler type:
+    To build with the Intel compiler type (read my blog entry to better understand some results http://searchivarius.org/blog/problem-previous-version-intels-library-benchmark):
 
     make -f Makefile.icc
               
