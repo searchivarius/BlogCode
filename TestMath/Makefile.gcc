@@ -15,7 +15,7 @@ testroot: testroot.o
 testtrigon: testtrigon.o
 	$(CXX) testtrigon.o -o testtrigon -static
 testdiv: testdiv.o
-	$(CXX) testdiv.o -o testdiv -static -mkl
+	$(CXX) testdiv.o -o testdiv -static 
 
 clean:
 	rm -f $(BINS) *.o
