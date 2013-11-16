@@ -88,7 +88,7 @@ void testDivMalkovNoDataDep(size_t N, size_t rep = 1) {
             sum+=b3/c3;
             sum+=b4/c4;
         }
-        sum /= 64;
+        sum /= N;
     }
 
     timer.split();
@@ -119,7 +119,7 @@ void testMulMalkovNoDataDep(size_t N, size_t rep) {
             sum+=b3*c3;
             sum+=b4*c4;
         }
-        sum /= 64;
+        sum /= N;
     }
 
     timer.split();
