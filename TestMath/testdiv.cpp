@@ -7,6 +7,8 @@
 
 #include "cmn.h"
 
+#include <immintrin.h>
+
 using namespace std;
 
 #define USE_ONLY_FLOAT false
@@ -20,7 +22,7 @@ using namespace std;
  */
 
 template <class T>
-void testDivDataDep0(size_t N = 210000000, size_t rep = 1) {
+void testDivDataDep0(size_t N, size_t rep) {
     T sum = 0;
     WallClockTimer timer;
 
@@ -51,7 +53,7 @@ void testDivDataDep0(size_t N = 210000000, size_t rep = 1) {
 }
 
 template <class T>
-void testDivDataDep1(size_t N = 210000000, size_t rep = 1) {
+void testDivDataDep1(size_t N, size_t rep) {
     T sum = 0;
     WallClockTimer timer;
 
@@ -114,7 +116,7 @@ void testMulDataDep0(size_t N, size_t rep) {
 }
 
 template <class T>
-void testMulDataDep1(size_t N = 210000000, size_t rep = 1) {
+void testMulDataDep1(size_t N, size_t rep) {
     T sum = 0;
     WallClockTimer timer;
 
@@ -203,6 +205,78 @@ cout << b4/c4 << " -> " << b4 * c3 * r34 << endl;
     cout << "=============================" << endl;
 }
 
+void testDivDataDep1_SIMD(size_t N, size_t rep) {
+    float sum = 0;
+    WallClockTimer timer;
+
+    for(size_t j = 0; j < N; j++){            
+        __m128 b = _mm_set_ps(0.9, 0.91, 0.92, 0.93);
+        __m128 c = _mm_set_ps(1, 1, 1, 1);
+
+        size_t  i = 0;
+        for(; i < rep/4*4; i += 4) {
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+        }
+        for(; i < rep; ++i) {
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+        }
+        float __attribute__((aligned(16))) TmpRes[4];
+
+        _mm_store_ps(TmpRes, c);
+
+        sum += TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3];
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "Test WITH data dependencies" << endl;
+    cout << "DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(float).name() << endl;
+    cout << "Milllions of DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
+void testMulDataDep1_SIMD(size_t N, size_t rep) {
+    float sum = 0;
+    WallClockTimer timer;
+
+    for(size_t j = 0; j < N; j++){            
+        __m128 b = _mm_set_ps(0.9, 0.91, 0.92, 0.93);
+        __m128 c = _mm_set_ps(1, 1, 1, 1);
+
+        size_t  i = 0;
+        for(; i < rep/4*4; i += 4) {
+          c = _mm_add_ps(c, _mm_mul_ps(b, c));
+          c = _mm_add_ps(c, _mm_mul_ps(b, c));
+          c = _mm_add_ps(c, _mm_mul_ps(b, c));
+          c = _mm_add_ps(c, _mm_mul_ps(b, c));
+        }
+        for(; i < rep; ++i) {
+          c = _mm_add_ps(c, _mm_div_ps(b, c));
+        }
+        float __attribute__((aligned(16))) TmpRes[4];
+
+        _mm_store_ps(TmpRes, c);
+
+        sum += TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3];
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "Test WITH data dependencies" << endl;
+    cout << "DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(float).name() << endl;
+    cout << "Milllions of DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
 int main() {
     SetHighAccuracy();
 
@@ -217,6 +291,8 @@ int main() {
       testDivDataDep1<double>(100000, 64);
       testDivDataDep1<long double>(100000, 64);
     }
+
+    testDivDataDep1_SIMD(100000, 64);
 
     testDiv2AtOnce<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
@@ -235,4 +311,6 @@ int main() {
       testMulDataDep1<double>(100000, 64);
       testMulDataDep1<long double>(100000, 64);
     }
+
+    testMulDataDep1_SIMD(100000, 64);
 }
