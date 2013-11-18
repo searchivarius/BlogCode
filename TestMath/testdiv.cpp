@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define USE_ONLY_FLOAT false
+#define USE_ONLY_FLOAT true
 
 template <class T>
 void testDivMalkovDataDep(size_t N = 210000000, size_t rep = 1) {
