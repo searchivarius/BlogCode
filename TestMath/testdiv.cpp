@@ -20,7 +20,7 @@ using namespace std;
  */
 
 template <class T>
-void testDivMalkovDataDep(size_t N = 210000000, size_t rep = 1) {
+void testDivMalkovDataDep0(size_t N = 210000000, size_t rep = 1) {
     T c1=1.0,b1=0.9;        
     T c2=1.0,b2=0.91;        
     T c3=1.0,b3=0.92;  
@@ -36,6 +36,42 @@ void testDivMalkovDataDep(size_t N = 210000000, size_t rep = 1) {
             c2+=b2/c1;
             c3+=b3/c2;
             c4+=b4/c3;
+        }
+        c1 *= coeff;
+        c2 *= coeff;
+        c3 *= coeff;
+        c4 *= coeff;
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    T sum = c1 + c2 + c3 + c4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "Test WITH data dependencies" << endl;
+    cout << "DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
+    cout << "Milllions of DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
+template <class T>
+void testDivMalkovDataDep1(size_t N = 210000000, size_t rep = 1) {
+    T c1=1.0,b1=0.9;        
+    T c2=1.0,b2=0.91;        
+    T c3=1.0,b3=0.92;  
+    T c4=1.0,b4=0.93;  
+
+    WallClockTimer timer;
+
+    T coeff = 1/T(rep) * 0.00001;
+
+    for(size_t j = 0; j < N; j++){            
+        for(size_t i = 0; i < rep; ++i) {
+            c1+=b1/c1;
+            c2+=b2/c2;
+            c3+=b3/c3;
+            c4+=b4/c4;
         }
         c1 *= coeff;
         c2 *= coeff;
@@ -369,10 +405,16 @@ void testMult1(int N, int rep) {
 int main() {
     SetHighAccuracy();
 
-    testDivMalkovDataDep<float>(100000, 64);
+    testDivMalkovDataDep0<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovDataDep<double>(100000, 64);
-      testDivMalkovDataDep<long double>(100000, 64);
+      testDivMalkovDataDep0<double>(100000, 64);
+      testDivMalkovDataDep0<long double>(100000, 64);
+    }
+
+    testDivMalkovDataDep1<float>(100000, 64);
+    if (!USE_ONLY_FLOAT) {
+      testDivMalkovDataDep1<double>(100000, 64);
+      testDivMalkovDataDep1<long double>(100000, 64);
     }
 
     testMulMalkovDataDep0<float>(100000, 64);
