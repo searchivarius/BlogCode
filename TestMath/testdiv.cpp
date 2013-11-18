@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define USE_ONLY_FLOAT true
+#define USE_ONLY_FLOAT false
 
 /*
  * I thank Yury Malkov for the ideas and scrutiny of my tests.
@@ -164,7 +164,9 @@ void testDiv2AtOnce(size_t N, size_t rep) {
 
 #if 0
 /* 
- * This version actually works a bit faster
+ * This version actually works a bit faster for single-precision numbers.
+ * There is an advantage of using it, though, with double and long double.
+ *
  * An old optimization trick, compute two divs at once:
  * http://stereopsis.com/2div.html
  * doesn't work any more.
