@@ -20,33 +20,28 @@ using namespace std;
  */
 
 template <class T>
-void testDivMalkovDataDep0(size_t N = 210000000, size_t rep = 1) {
-    T c1=1.0,b1=0.9;        
-    T c2=1.0,b2=0.91;        
-    T c3=1.0,b3=0.92;  
-    T c4=1.0,b4=0.93;  
-
+void testDivDataDep0(size_t N = 210000000, size_t rep = 1) {
+    T sum = 0;
     WallClockTimer timer;
 
-    T coeff = 1/T(rep) * 0.00001;
-
     for(size_t j = 0; j < N; j++){            
+        T c1=1.0,b1=0.9;        
+        T c2=1.0,b2=0.91;        
+        T c3=1.0,b3=0.92;  
+        T c4=1.0,b4=0.93;  
+
         for(size_t i = 0; i < rep; ++i) {
             c1+=b1/c4;
             c2+=b2/c1;
             c3+=b3/c2;
             c4+=b4/c3;
         }
-        c1 *= coeff;
-        c2 *= coeff;
-        c3 *= coeff;
-        c4 *= coeff;
+        sum += c1 + c2 + c3 + c4;
     }
 
     timer.split();
     uint64_t t = timer.elapsed();
     uint64_t TotalQty = rep * N * 4;
-    T sum = c1 + c2 + c3 + c4;
     cout << __func__ << endl;
     cout << "Ignore: " << sum << endl;
     cout << "Test WITH data dependencies" << endl;
@@ -56,33 +51,28 @@ void testDivMalkovDataDep0(size_t N = 210000000, size_t rep = 1) {
 }
 
 template <class T>
-void testDivMalkovDataDep1(size_t N = 210000000, size_t rep = 1) {
-    T c1=1.0,b1=0.9;        
-    T c2=1.0,b2=0.91;        
-    T c3=1.0,b3=0.92;  
-    T c4=1.0,b4=0.93;  
-
+void testDivDataDep1(size_t N = 210000000, size_t rep = 1) {
+    T sum = 0;
     WallClockTimer timer;
 
-    T coeff = 1/T(rep) * 0.00001;
-
     for(size_t j = 0; j < N; j++){            
+        T c1=1.0,b1=0.9;        
+        T c2=1.0,b2=0.91;        
+        T c3=1.0,b3=0.92;  
+        T c4=1.0,b4=0.93;  
+
         for(size_t i = 0; i < rep; ++i) {
             c1+=b1/c1;
             c2+=b2/c2;
             c3+=b3/c3;
             c4+=b4/c4;
         }
-        c1 *= coeff;
-        c2 *= coeff;
-        c3 *= coeff;
-        c4 *= coeff;
+        sum += c1 + c2 + c3 + c4;
     }
 
     timer.split();
     uint64_t t = timer.elapsed();
     uint64_t TotalQty = rep * N * 4;
-    T sum = c1 + c2 + c3 + c4;
     cout << __func__ << endl;
     cout << "Ignore: " << sum << endl;
     cout << "Test WITH data dependencies" << endl;
@@ -92,33 +82,29 @@ void testDivMalkovDataDep1(size_t N = 210000000, size_t rep = 1) {
 }
 
 template <class T>
-void testMulMalkovDataDep0(size_t N = 210000000, size_t rep = 1) {
-    T c1=1.0,b1=0.9;        
-    T c2=1.0,b2=0.91;        
-    T c3=1.0,b3=0.92;  
-    T c4=1.0,b4=0.93;  
+void testMulDataDep0(size_t N, size_t rep) {
+    T sum = 0;
 
     WallClockTimer timer;
 
-    T coeff = 1/T(rep) * 0.00001;
-
     for(size_t j = 0; j < N; j++){            
+        T c1=1.0,b1=0.9;        
+        T c2=1.0,b2=0.91;        
+        T c3=1.0,b3=0.92;  
+        T c4=1.0,b4=0.93;  
+
         for(size_t i = 0; i < rep; ++i) {
             c1+=b1*c4;
             c2+=b2*c1;
             c3+=b3*c2;
             c4+=b4*c3;
         }
-        c1 *= coeff;
-        c2 *= coeff;
-        c3 *= coeff;
-        c4 *= coeff;
+        sum += c1 + c2 + c3 + c4;
     }
 
     timer.split();
     uint64_t t = timer.elapsed();
     uint64_t TotalQty = rep * N * 4;
-    T sum = c1 + c2 + c3 + c4;
     cout << __func__ << endl;
     cout << "Ignore: " << sum << endl;
     cout << "Test WITH data dependencies" << endl;
@@ -128,33 +114,28 @@ void testMulMalkovDataDep0(size_t N = 210000000, size_t rep = 1) {
 }
 
 template <class T>
-void testMulMalkovDataDep1(size_t N = 210000000, size_t rep = 1) {
-    T c1=1.0,b1=0.9;        
-    T c2=1.0,b2=0.91;        
-    T c3=1.0,b3=0.92;  
-    T c4=1.0,b4=0.93;  
-
+void testMulDataDep1(size_t N = 210000000, size_t rep = 1) {
+    T sum = 0;
     WallClockTimer timer;
 
-    T coeff = 1/T(rep) * 0.00001;
-
     for(size_t j = 0; j < N; j++){            
+        T c1=1.0,b1=0.9;        
+        T c2=1.0,b2=0.91;        
+        T c3=1.0,b3=0.92;  
+        T c4=1.0,b4=0.93;  
+
         for(size_t i = 0; i < rep; ++i) {
             c1+=b1*c1;
             c2+=b2*c2;
             c3+=b3*c3;
             c4+=b4*c4;
         }
-        c1 *= coeff;
-        c2 *= coeff;
-        c3 *= coeff;
-        c4 *= coeff;
+        sum += c1 + c2 + c3 + c4;
     }
 
     timer.split();
     uint64_t t = timer.elapsed();
     uint64_t TotalQty = rep * N * 4;
-    T sum = c1 + c2 + c3 + c4;
     cout << __func__ << endl;
     cout << "Ignore: " << sum << endl;
     cout << "Test WITH data dependencies" << endl;
@@ -163,30 +144,93 @@ void testMulMalkovDataDep1(size_t N = 210000000, size_t rep = 1) {
     cout << "=============================" << endl;
 }
 
+template <class T>
+void testDiv2AtOnce(size_t N, size_t rep) {
+    T sum = 0;
+
+    WallClockTimer timer;
+
+    T coeff = 1/T(rep) * 0.00001;
+
+    for(size_t j = 0; j < N; j++){            
+        T c1=1.0,b1=0.9;        
+        T c2=1.0,b2=0.91;        
+        T c3=1.0,b3=0.92;  
+        T c4=1.0,b4=0.93;  
+
+        for(size_t i = 0; i < rep; ++i) {
+            T r12 = T(1.0)/ (c1 * c2);
+            T r34 = T(1.0)/ (c3 * c4);
+
+#if 0
+/* 
+ * This version actually works a bit faster
+ * An old optimization trick, compute two divs at once:
+ * http://stereopsis.com/2div.html
+ * doesn't work any more.
+ */
+            c1+=b1/c1;
+            c2+=b2/c2;
+            c3+=b3/c3;
+            c4+=b4/c4;
+#else
+/*
+// Just to double-check I'm doing the right thing
+cout << b1/c1 << " -> " << b1 * c2 * r12 << endl;
+cout << b2/c2 << " -> " << b2 * c1 * r12 << endl;
+cout << b3/c3 << " -> " << b3 * c4 * r34 << endl;
+cout << b4/c4 << " -> " << b4 * c3 * r34 << endl;
+*/
+            c1+=b1 * c2 * r12;
+            c2+=b2 * c1 * r12;
+            c3+=b3 * c4 * r34;
+            c4+=b4 * c3 * r34;
+#endif
+        }
+        sum += c1 + c2 + c3 + c4;
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "Test WITH data dependencies" << endl;
+    cout << "DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
+    cout << "Milllions of DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
 int main() {
     SetHighAccuracy();
 
-    testDivMalkovDataDep0<float>(100000, 512);
+    testDivDataDep0<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovDataDep0<double>(100000, 512);
-      testDivMalkovDataDep0<long double>(100000, 512);
+      testDivDataDep0<double>(100000, 64);
+      testDivDataDep0<long double>(100000, 64);
     }
 
-    testDivMalkovDataDep1<float>(100000, 512);
+    testDivDataDep1<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovDataDep1<double>(100000, 512);
-      testDivMalkovDataDep1<long double>(100000, 512);
+      testDivDataDep1<double>(100000, 64);
+      testDivDataDep1<long double>(100000, 64);
     }
 
-    testMulMalkovDataDep0<float>(100000, 512);
+    testDiv2AtOnce<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
-      testMulMalkovDataDep0<double>(100000, 512);
-      testMulMalkovDataDep0<long double>(100000, 512);
+      testDiv2AtOnce<double>(100000, 64);
+      testDiv2AtOnce<long double>(100000, 64);
     }
 
-    testMulMalkovDataDep1<float>(100000, 512);
+    testMulDataDep0<float>(100000, 64);
     if (!USE_ONLY_FLOAT) {
-      testMulMalkovDataDep1<double>(100000, 512);
-      testMulMalkovDataDep1<long double>(100000, 512);
+      testMulDataDep0<double>(100000, 64);
+      testMulDataDep0<long double>(100000, 64);
+    }
+
+    testMulDataDep1<float>(100000, 64);
+    if (!USE_ONLY_FLOAT) {
+      testMulDataDep1<double>(100000, 64);
+      testMulDataDep1<long double>(100000, 64);
     }
 }
