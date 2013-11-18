@@ -397,63 +397,63 @@ void testMult1(int N, int rep) {
 int main() {
     SetHighAccuracy();
 
-    testDivMalkovDataDep0<float>(100000, 64);
+    testDivMalkovDataDep0<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovDataDep0<double>(100000, 64);
-      testDivMalkovDataDep0<long double>(100000, 64);
+      testDivMalkovDataDep0<double>(1000000, 512);
+      testDivMalkovDataDep0<long double>(1000000, 512);
     }
 
-    testDivMalkovDataDep1<float>(100000, 64);
+    testDivMalkovDataDep1<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovDataDep1<double>(100000, 64);
-      testDivMalkovDataDep1<long double>(100000, 64);
+      testDivMalkovDataDep1<double>(1000000, 512);
+      testDivMalkovDataDep1<long double>(1000000, 512);
     }
 
-    testMulMalkovDataDep0<float>(100000, 64);
+    testMulMalkovDataDep0<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testMulMalkovDataDep0<double>(100000, 64);
-      testMulMalkovDataDep0<long double>(100000, 64);
+      testMulMalkovDataDep0<double>(1000000, 512);
+      testMulMalkovDataDep0<long double>(1000000, 512);
     }
 
-    testMulMalkovDataDep1<float>(100000, 64);
+    testMulMalkovDataDep1<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testMulMalkovDataDep1<double>(100000, 64);
-      testMulMalkovDataDep1<long double>(100000, 64);
+      testMulMalkovDataDep1<double>(1000000, 512);
+      testMulMalkovDataDep1<long double>(1000000, 512);
     }
 
-    testDivMalkovNoDataDep<float>(100000, 64);
+    testDivMalkovNoDataDep<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testDivMalkovNoDataDep<double>(100000, 64);
-      testDivMalkovNoDataDep<long double>(100000, 64);
+      testDivMalkovNoDataDep<double>(1000000, 512);
+      testDivMalkovNoDataDep<long double>(1000000, 512);
     }
 
-    testMulMalkovNoDataDep<float>(100000, 64);
+    testMulMalkovNoDataDep<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testMulMalkovNoDataDep<double>(100000, 64);
-      testMulMalkovNoDataDep<long double>(100000, 64);
+      testMulMalkovNoDataDep<double>(1000000, 512);
+      testMulMalkovNoDataDep<long double>(1000000, 512);
     }
 
-    testDiv0<float>(100000, 64);
+    testDiv0<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testDiv0<double>(100000, 64);
-      testDiv0<long double>(100000, 64);
+      testDiv0<double>(1000000, 512);
+      testDiv0<long double>(1000000, 512);
     }
 
-    testMult0<float>(100000, 64);
+    testMult0<float>(1000000, 512);
     if (!USE_ONLY_FLOAT) {
-      testMult0<double>(100000, 64);
-      testMult0<long double>(100000, 64);
+      testMult0<double>(1000000, 512);
+      testMult0<long double>(1000000, 512);
     }
 
-    testDiv1<float>(10000, 64);
+    testDiv1<float>(10000, 512);
     if (!USE_ONLY_FLOAT) {
-      testDiv1<double>(10000, 64);
-      testDiv1<long double>(10000, 64);
+      testDiv1<double>(10000, 512);
+      testDiv1<long double>(10000, 512);
     }
 
-    testMult1<float>(10000, 64);
+    testMult1<float>(10000, 512);
     if (!USE_ONLY_FLOAT) {
-      testMult1<double>(10000, 64);
-      testMult1<long double>(10000, 64);
+      testMult1<double>(10000, 512);
+      testMult1<long double>(10000, 512);
     }
 }
