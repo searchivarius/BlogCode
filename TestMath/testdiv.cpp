@@ -177,13 +177,9 @@ void testDivMalkovNoDataDep(size_t N, size_t rep = 1) {
     for(size_t i = 0; i < rep; ++i) {
         for(size_t j = 0; j < N; j++){            
             sum+=b1/c1;
-            c1 += 0.00001;
             sum+=b2/c2;
-            c2 += 0.00001;
             sum+=b3/c3;
-            c3 += 0.00001;
             sum+=b4/c4;
-            c4 += 0.00001;
         }
         sum /= N;
     }
@@ -213,13 +209,9 @@ void testMulMalkovNoDataDep(size_t N, size_t rep) {
     for(size_t i = 0; i < rep; ++i) {
         for(size_t j = 0; j < N; j++){            
             sum+=b1*c1;
-            c1 += 0.00001;
             sum+=b2*c2;
-            c2 += 0.00001;
             sum+=b3*c3;
-            c3 += 0.00001;
             sum+=b4*c4;
-            c4 += 0.00001;
         }
         sum /= N;
     }
