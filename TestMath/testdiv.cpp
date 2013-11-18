@@ -147,10 +147,10 @@ void testDiv(int N, int rep) {
       T v3 = data[i+2];
       T v4 = data[i+3];
       for (int j = 0; j < rep; ++j) {
-            sum += v1 * v2;
-            sum += v2 * v3;
-            sum += v3 * v4;
-            sum += v4 * v1;
+            sum += v1 / v2;
+            sum += v2 / v3;
+            sum += v3 / v4;
+            sum += v4 / v1;
         }
     }
     timer.split();
