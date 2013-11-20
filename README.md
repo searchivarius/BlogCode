@@ -2,7 +2,7 @@ Various tests (in C++) language.
 
 1. TestMath -- How long does it take to compute a log, a pow, an exponent, etc?
    Is division slower than multiplication?
-   There are 2 makefiles in TestMath. One is to be used with GNU C++, another with the Intel C++ compiler.
+   There are 3 makefiles in TestMath. Two should to be used with GNU C++ (they only differ in the optimization flag), another with the Intel C++ compiler.
 
     To build with g++ type:
 
