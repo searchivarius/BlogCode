@@ -90,7 +90,7 @@ void testDivVectorAVX(size_t N, size_t rep,
             b1++; b2++; b3++; b4++;
             __m256d C = _mm256_cvtepi32_pd(_mm_set_epi32(c4, c3, c2, c1));
             __m256d R = _mm256_div_pd(B, C);
-#if 1
+#if 0
             // This conversion function apparently rounds
             // as opposed to doing floor()
             // This is why, if you  uncomment this code,
