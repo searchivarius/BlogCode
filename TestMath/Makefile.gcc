@@ -1,6 +1,6 @@
-BINS=testexp testlog testpow testroot testtrigon testdiv
+BINS=testexp testlog testpow testroot testtrigon testdiv testintdiv
 
-CXXFLAGS+=-I..  -static -O3
+CXXFLAGS+=-I..  -static -O3 -msse4.1
 
 all: $(BINS)
 
@@ -16,6 +16,8 @@ testtrigon: testtrigon.o
 	$(CXX) testtrigon.o -o testtrigon -static
 testdiv: testdiv.o
 	$(CXX) testdiv.o -o testdiv -static 
+testintdiv: testintdiv.o
+	$(CXX) testintdiv.o -o testintdiv -static 
 
 clean:
 	rm -f $(BINS) *.o

@@ -1,7 +1,7 @@
 # You may need to point it to the correct location
 # of the Intel compiler binary.
 CXX=/opt/intel/bin/icpc
-BINS=testexp testlog testpow testroot testtrigon testdiv
+BINS=testexp testlog testpow testroot testtrigon testdiv testintdiv
 
 CXXFLAGS+=-I.. -mkl  -O3
 
@@ -19,6 +19,8 @@ testtrigon: testtrigon.o
 	$(CXX) testtrigon.o -o testtrigon -static -mkl
 testdiv: testdiv.o
 	$(CXX) testdiv.o -o testdiv -static -mkl
+testintdiv: testintdiv.o
+	$(CXX) testintdiv.o -o testintdiv -static -mkl
 
 clean:
 	rm -f $(BINS) *.o
