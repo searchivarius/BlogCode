@@ -7,7 +7,9 @@
 
 #include "cmn.h"
 
+#if defined __i386__ || defined __x86_64__
 #include <immintrin.h>
+#endif
 
 using namespace std;
 

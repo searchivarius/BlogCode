@@ -14,7 +14,9 @@
 // C headers (sorted)
 #include <errno.h>
 #include <fcntl.h>
+#if defined __i386__ || defined __x86_64__
 #include <immintrin.h>
+#endif
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
