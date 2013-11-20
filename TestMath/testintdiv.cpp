@@ -3,6 +3,9 @@
  * Apache License Version 2.0 http://www.apache.org/licenses/.
  *
  * (c) Leonid Boytsov, http://boytsov.info
+ * 
+ * Implementing ideas of Nathan Kurz: let's vectorize integer division
+ * by converting integers to floating-point numbers
  */
 
 #include "cmn.h"
