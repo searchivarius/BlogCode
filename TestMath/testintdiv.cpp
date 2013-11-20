@@ -14,6 +14,8 @@
 #include <emmintrin.h>
 #include <smmintrin.h>
 
+#include "vectori128.h"
+
 using namespace std;
 
 void testDiv16Scalar(size_t N, size_t rep, 
@@ -133,6 +135,65 @@ void testDiv16VectorFloatAvx(size_t N, size_t rep,
     cout << "Ignore: " << sum << endl;
     cout << "Integer 16-bit DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(uint32_t).name() << endl;
     cout << "Milllions of 16-bit integer DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
+/*
+ * This function uses files from the Agner's vector class library:
+ * http://www.agner.org/optimize/#vectorclass
+ *
+ * These files are distributed under the GNU license v 3, for details see:
+ * http://www.gnu.org/licenses/quick-guide-gplv3.html 
+ *
+ */
+void testDiv32AgnerOneDiv(size_t N, size_t rep, 
+                  uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
+                  uint32_t c) {
+    uint32_t sum = 0;
+    WallClockTimer timer;
+
+    for(size_t j = 0; j < N; j++){            
+        for(size_t i = 0; i < rep; ++i) {
+            Vec4ui   B(b4, b3, b2, b1);
+            Vec4ui   D = B / c;
+            b1++; b2++; b3++; b4++;
+            sum += D[0] + D[1] + D[2] + D[3];
+        }
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "32-bit Integer DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(uint32_t).name() << endl;
+    cout << "Milllions of 32-bit integer DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
+void testDiv32ScalarOneDiv(size_t N, size_t rep, 
+                  uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
+                  uint32_t c) {
+    uint32_t sum = 0;
+    WallClockTimer timer;
+
+    for(size_t j = 0; j < N; j++){            
+
+        for(size_t i = 0; i < rep; ++i) {
+            sum += b1/c; b1++;
+            sum += b2/c; b2++;
+            sum += b3/c; b3++;
+            sum += b4/c; b4++;
+        }
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "32-bit Integer DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(uint32_t).name() << endl;
+    cout << "Milllions of 32-bit integer DIVs per sec: " << (float(TotalQty) / t) << endl;
     cout << "=============================" << endl;
 }
 
@@ -302,6 +363,10 @@ void TestLargeNum() {
     testDiv32Scalar(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
     testDiv32VectorDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
     testDiv32VectorAVXDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
+
+    
+    testDiv32ScalarOneDiv(2000000, 16, b1, b2, b3, b4, c1);
+    testDiv32AgnerOneDiv(2000000, 16, b1, b2, b3, b4, c1);
 }
 
 int main() {
