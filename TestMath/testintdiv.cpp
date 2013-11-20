@@ -293,6 +293,7 @@ void testDiv32VectorAVXDouble(size_t N, size_t rep,
     cout << "=============================" << endl;
 }
 
+#ifdef __INTEL_COMPILER
 void testDiv32VectorIntel(size_t N, size_t rep, 
                    uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
                    uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4) {
@@ -323,6 +324,7 @@ void testDiv32VectorIntel(size_t N, size_t rep,
     cout << "Milllions of integer DIVs per sec: " << (float(TotalQty) / t) << endl;
     cout << "=============================" << endl;
 }
+#endif
 
 void TestSmallNum() {
 /* 
@@ -392,7 +394,9 @@ void TestLargeNum() {
     cout << b4 << " -> " << c4 << ": " << b4/c4 << endl;
 
     testDiv32Scalar(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
+#ifdef __INTEL_COMPILER
     testDiv32VectorIntel(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
+#endif
     testDiv32VectorDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
     testDiv32VectorAVXDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
 
