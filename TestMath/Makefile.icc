@@ -3,7 +3,7 @@
 CXX=/opt/intel/bin/icpc
 BINS=testexp testlog testpow testroot testtrigon testdiv testintdiv
 
-CXXFLAGS+=-I.. -mkl  -O3
+CXXFLAGS+=-I.. -mkl  -O3 -xAVX
 
 all: $(BINS)
 
