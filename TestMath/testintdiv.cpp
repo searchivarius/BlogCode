@@ -293,6 +293,37 @@ void testDiv32VectorAVXDouble(size_t N, size_t rep,
     cout << "=============================" << endl;
 }
 
+void testDiv32VectorIntel(size_t N, size_t rep, 
+                   uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
+                   uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4) {
+    uint32_t sum = 0;
+    WallClockTimer timer;
+
+   __m256i C = _mm_set_epi32(c4, c3, c2, c1);
+
+    for(size_t j = 0; j < N; j++){            
+        for(size_t i = 0; i < rep; ++i) {
+            __m256i B = __mm_set_epi32(b4, b3, b2, b1);
+            b1++; b2++; b3++; b4++;
+            __m256i R = _mm_div_epi32(B, C);
+
+            sum += _mm_extract_epi32(R, 0); 
+            sum += _mm_extract_epi32(R, 1); 
+            sum += _mm_extract_epi32(R, 2); 
+            sum += _mm_extract_epi32(R, 3); 
+        }
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "Integer DIVs computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(uint32_t).name() << endl;
+    cout << "Milllions of integer DIVs per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
 void TestSmallNum() {
 /* 
  * A catch: doesn't work with large unsigned integers,
@@ -361,6 +392,7 @@ void TestLargeNum() {
     cout << b4 << " -> " << c4 << ": " << b4/c4 << endl;
 
     testDiv32Scalar(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
+    testDiv32Intel(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
     testDiv32VectorDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
     testDiv32VectorAVXDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
 
