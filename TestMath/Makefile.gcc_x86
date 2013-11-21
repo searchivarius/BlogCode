@@ -1,6 +1,6 @@
 BINS=testexp testlog testpow testroot testtrigon testdiv testintdiv
 
-CXXFLAGS+=-I..  -static -O3 -mavx
+CXXFLAGS+=-I..  -static -O3 -march=avx
 
 all: $(BINS)
 

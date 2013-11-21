@@ -10,9 +10,11 @@
 
 #include "cmn.h"
 
-#if defined __SSE2__
+#include <immintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
+
 #include "vectori128.h"
-#endif
 
 using namespace std;
 
@@ -57,7 +59,6 @@ void testDiv16VectorFloat(size_t N, size_t rep,
     uint32_t sum = 0;
     WallClockTimer timer;
 
-#if defined __SSE4_1__
     __m128  B, C, R;
     __m128i Bi;
 
@@ -84,7 +85,6 @@ void testDiv16VectorFloat(size_t N, size_t rep,
             sum += _mm_extract_epi32(Bi, 3); 
         }
     }
-#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -105,7 +105,6 @@ void testDiv16VectorFloatAvx(size_t N, size_t rep,
     WallClockTimer timer;
 
 
-#if defined __AVX__
     for(size_t j = 0; j < N; j++){            
         for(size_t i = 0; i < rep; ++i) {
             __m256 B = _mm256_cvtepi32_ps(_mm256_set_epi32(b8, b7, b6, b5, b4, b3, b2, b1));
@@ -128,7 +127,6 @@ void testDiv16VectorFloatAvx(size_t N, size_t rep,
             sum += _mm_extract_epi32(Bi2, 3); 
         }
     }
-#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -154,7 +152,6 @@ void testDiv32AgnerOneDiv(size_t N, size_t rep,
     uint32_t sum = 0;
     WallClockTimer timer;
 
-#if __SSE2__
     for(size_t j = 0; j < N; j++){            
         for(size_t i = 0; i < rep; ++i) {
             Vec4ui   B(b4, b3, b2, b1);
@@ -163,7 +160,6 @@ void testDiv32AgnerOneDiv(size_t N, size_t rep,
             sum += D[0] + D[1] + D[2] + D[3];
         }
     }
-#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -233,7 +229,6 @@ void testDiv32VectorDouble(size_t N, size_t rep,
     uint32_t sum = 0;
     WallClockTimer timer;
 
-#if defined __SSE4_1__
     __m128d B, C, R;
     __m128i Bi;
 
@@ -256,7 +251,6 @@ void testDiv32VectorDouble(size_t N, size_t rep,
             sum += _mm_extract_epi32(Bi, 1); 
         }
     }
-#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -274,7 +268,6 @@ void testDiv32VectorAVXDouble(size_t N, size_t rep,
     uint32_t sum = 0;
     WallClockTimer timer;
 
-#if defined __AVX__
     for(size_t j = 0; j < N; j++){            
         for(size_t i = 0; i < rep; ++i) {
             __m256d B = _mm256_cvtepi32_pd(_mm_set_epi32(b4, b3, b2, b1));
@@ -289,7 +282,6 @@ void testDiv32VectorAVXDouble(size_t N, size_t rep,
             sum += _mm_extract_epi32(Bi, 3); 
         }
     }
-#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -402,20 +394,10 @@ void TestLargeNum() {
     cout << b4 << " -> " << c4 << ": " << b4/c4 << endl;
 
     testDiv32Scalar(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
-#ifdef __INTEL_COMPILER
-    testDiv32VectorIntel(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
-#endif
-    testDiv32VectorDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
-    testDiv32VectorAVXDouble(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
-
-    
-    testDiv32ScalarOneDiv(2000000, 16, b1, b2, b3, b4, c1);
-    testDiv32AgnerOneDiv(2000000, 16, b1, b2, b3, b4, c1);
 }
 
 int main() {
     SetHighAccuracy();
 
-    TestSmallNum();
     TestLargeNum();
 }

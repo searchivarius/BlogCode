@@ -4,9 +4,13 @@ Various tests (in C++) language.
    Is division slower than multiplication?
    There are 3 makefiles in TestMath. Two should to be used with GNU C++ (they only differ in the optimization flag), another with the Intel C++ compiler.
 
-    To build with g++ type:
+    To build with g++ on x86 platform type:
 
-    make -f Makefile.gcc
+    make -f Makefile.gcc_x86
+
+    To build with g++ on platform other than x86 type:
+
+    make -f Makefile.gcc_other
     
     There is also a makefile for the Intel compiler. To better understand benchmark results,
     please, read my blog entry. This should be important: 
