@@ -1,6 +1,6 @@
 BINS=testexp testlog testpow testroot testtrigon testdiv testintdiv
 
-CXXFLAGS+=-I..  -static -Ofast -mavx
+CXXFLAGS+=-I..  -static -Ofast -march=native
 
 all: $(BINS)
 
