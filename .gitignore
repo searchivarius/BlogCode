@@ -1,0 +1,10 @@
+*.o
+TestMath/testdiv
+TestMath/testexp
+TestMath/testintdiv
+TestMath/testlog
+TestMath/testpow
+TestMath/testroot
+TestMath/testtrigon
+*~
+*.bak
