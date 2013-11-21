@@ -14,8 +14,11 @@
 // C headers (sorted)
 #include <errno.h>
 #include <fcntl.h>
-#if defined __i386__ || defined __x86_64__
+#if defined __SSE2__
 #include <immintrin.h>
+#include <immintrin.h>
+#include <emmintrin.h>
+#include <smmintrin.h>
 #endif
 #include <inttypes.h>
 #include <stdio.h>
