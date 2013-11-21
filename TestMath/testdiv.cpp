@@ -7,7 +7,9 @@
 
 #include "cmn.h"
 
+#if defined __i386__ || defined __x86_64__
 #include <immintrin.h>
+#endif
 
 using namespace std;
 
@@ -209,6 +211,7 @@ void testDivDataDep1_SIMD(size_t N, size_t rep) {
     float sum = 0;
     WallClockTimer timer;
 
+#if defined __i386__ || defined __x86_64__
     for(size_t j = 0; j < N; j++){            
         __m128 b = _mm_set_ps(0.9, 0.91, 0.92, 0.93);
         __m128 c = _mm_set_ps(1, 1, 1, 1);
@@ -229,6 +232,7 @@ void testDivDataDep1_SIMD(size_t N, size_t rep) {
 
         sum += TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3];
     }
+#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
@@ -245,6 +249,7 @@ void testMulDataDep1_SIMD(size_t N, size_t rep) {
     float sum = 0;
     WallClockTimer timer;
 
+#if defined __i386__ || defined __x86_64__
     for(size_t j = 0; j < N; j++){            
         __m128 b = _mm_set_ps(0.9, 0.91, 0.92, 0.93);
         __m128 c = _mm_set_ps(1, 1, 1, 1);
@@ -265,6 +270,7 @@ void testMulDataDep1_SIMD(size_t N, size_t rep) {
 
         sum += TmpRes[0] + TmpRes[1] + TmpRes[2] + TmpRes[3];
     }
+#endif
 
     timer.split();
     uint64_t t = timer.elapsed();
