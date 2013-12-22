@@ -1,6 +1,6 @@
 Code used on Leonid Boytsov's blog:
 
-searchivarius.org
+http://searchivarius.org
 
 Disclaimer: this is experimental code, which was not thoroughly tested. 
 It is typically used to illustrate ideas that I discuss on my blog.
