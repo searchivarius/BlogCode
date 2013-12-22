@@ -5,16 +5,19 @@ Is division slower than multiplication?
 There are 2 makefiles here.
 
 
-    To build using gcc:
+GCC:
 
-    make -f Makefile.gcc
-    
-    There is also a makefile for the Intel compiler. To better understand benchmark results,
-    please, read my blog entry. This should be important: 
-    http://searchivarius.org/blog/problem-previous-version-intels-library-benchmark
+make -f Makefile.gcc
 
-    To build with the Intel compiler type:
+Intel:
 
-    make -f Makefile.icc
+make -f Makefile.icc
+
+To better understand benchmark results,
+please, read my blog entry. This should be important: 
+http://searchivarius.org/blog/problem-previous-version-intels-library-benchmark
+
+
+
               
 
