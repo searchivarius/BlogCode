@@ -29,13 +29,15 @@ int main(int argc, char* argv[]) {
 
   URL2DocIDPtr *arr = new URL2DocIDPtr[qty];
     
-  int sz = 0;
+  size_t sz = 0;
 
   // We want to mimic Java consumption
   // In Java a char uses > one byte
   char buf[JavaCharSize*maxLen];
 
   fill(buf, buf + sizeof buf, 'a');
+
+  cout << "Qty: " << qty << endl;
     
   for (int i = 0; i < qty; ++i) {
     int len = minLen + rand() % (maxLen - minLen);
@@ -47,7 +49,7 @@ int main(int argc, char* argv[]) {
     
   cout << "Before sorting!" << endl;
   sort(arr, arr + qty);
-  cout << "Sorting is done, total size of strings and ints: " 
+  cout << "Sorting is done, space occupied : " 
                         << sz/1024.0/1024.0/1024.0 << " Gb" << endl;
   for (int i = 0; i < qty; ++i) {
     delete arr[i];

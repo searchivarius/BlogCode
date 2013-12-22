@@ -17,7 +17,7 @@ public class Main {
     
     URL2DocID arr[] = new URL2DocID[qty];
     
-    int sz = 0;
+    long sz = 0;
     
     for (int i = 0; i < qty; ++i) {
       int len = minLen + (int)Math.ceil((maxLen - minLen) * Math.random());
@@ -29,7 +29,7 @@ public class Main {
     
     System.out.println("Before sorting!");
     Arrays.sort(arr);
-    System.out.println("Sorting is done, total size of strings and ints: " 
+    System.out.println("Sorting is done, space occupied: " 
                         + sz/1024.0/1024.0/1024.0 + " Gb");
   }
 
