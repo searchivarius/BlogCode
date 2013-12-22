@@ -1,4 +1,4 @@
 #!/bin/bash
 qty="$1"
-../memusage.sh ./memtest
+time ./memusage.sh ./memtest $qty
 

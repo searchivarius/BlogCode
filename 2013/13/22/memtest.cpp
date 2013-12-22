@@ -49,5 +49,11 @@ int main(int argc, char* argv[]) {
   sort(arr, arr + qty);
   cout << "Sorting is done, total size of strings and ints: " 
                         << sz/1024.0/1024.0/1024.0 << " Gb" << endl;
+  for (int i = 0; i < qty; ++i) {
+    delete arr[i];
+  }
+
+  delete [] arr;
+
   return 0;
 }
