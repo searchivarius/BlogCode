@@ -8,7 +8,7 @@
 #include "mkl.h"
 #endif
 
-#include "ztimer.h"
+#include "../ztimer.h"
 
 inline void SetHighAccuracy() {
 #ifdef  __INTEL_COMPILER
