@@ -2,6 +2,10 @@
  * This code is released under the
  * Apache License Version 2.0 http://www.apache.org/licenses/.
  *
+ * The code was used in Leo's blog:
+ *
+ * http://searchivarius.org/blog/efficient-exponentiation-square-rooting
+ *
  * (c) Leonid Boytsov, http://boytsov.info
  */
 
