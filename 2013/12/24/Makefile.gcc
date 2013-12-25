@@ -1,0 +1,11 @@
+BINS=testfractpow 
+
+CXXFLAGS+=-I..  -static -Ofast -march=native
+
+all: $(BINS)
+
+testfractpow: testfractpow.o
+	$(CXX) testfractpow.o -o testfractpow -static
+
+clean:
+	rm -f $(BINS) *.o

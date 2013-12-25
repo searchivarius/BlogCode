@@ -1,0 +1,14 @@
+# You may need to point it to the correct location
+# of the Intel compiler binary.
+CXX=/opt/intel/bin/icpc
+BINS=testfractpow 
+
+CXXFLAGS+=-I.. -mkl  -O3 -xAVX
+
+all: $(BINS)
+
+testfractpow: testfractpow.o
+	$(CXX) testfractpow.o -o testfractpow -static -mkl
+
+clean:
+	rm -f $(BINS) *.o
