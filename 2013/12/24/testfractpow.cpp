@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const unsigned MaxNumDig = 8;
+const unsigned MaxNumDig = 20;
 
 using namespace std;
 
@@ -80,16 +80,19 @@ void testPow(int N, int rep, unsigned NumDig) {
 }
 
 template <class T>
-void testEfficientFractPow(int N, int rep, unsigned NumDig, bool bRootOnly) {
+void testEfficientFractPow(int N, int rep, 
+                           unsigned FuncNumDig, unsigned DataNumDig, 
+                           bool bRootOnly) {
     cout << "================================ " << endl;
     vector<T>   data1(N*4);
     vector<T>   data2(N*4);
 
-    uint64_t MaxK = uint64_t(1)<<NumDig;
+    uint64_t MaxK = uint64_t(1)<<FuncNumDig;
+    uint64_t DataMaxK = uint64_t(1)<<DataNumDig;
 
     for (int i = 0; i < 4*N; ++i) {
         data1[i] = 1 + (rand() % 10000) / 10.0;
-        data2[i] = bRootOnly ? T(1) / T(MaxK):(rand() % MaxK) / T(MaxK);
+        data2[i] = bRootOnly ? T(1) / T(DataMaxK):(rand() % MaxK) / T(DataMaxK);
     }
 
     WallClockTimer timer;
@@ -97,10 +100,10 @@ void testEfficientFractPow(int N, int rep, unsigned NumDig, bool bRootOnly) {
     T fract = T(1)/N;
     for (int j = 0; j < rep; ++j) {
         for (int i = 0; i < N*4; i+=4) {
-            sum += 0.01 * EfficientFractPow(data1[i],   data2[i], NumDig); 
-            sum += 0.01 * EfficientFractPow(data1[i+1], data2[i+1], NumDig); 
-            sum += 0.01 * EfficientFractPow(data1[i+2], data2[i+2], NumDig); 
-            sum += 0.01 * EfficientFractPow(data1[i+3], data2[i+3], NumDig); 
+            sum += 0.01 * EfficientFractPow(data1[i],   data2[i], FuncNumDig); 
+            sum += 0.01 * EfficientFractPow(data1[i+1], data2[i+1], FuncNumDig); 
+            sum += 0.01 * EfficientFractPow(data1[i+2], data2[i+2], FuncNumDig); 
+            sum += 0.01 * EfficientFractPow(data1[i+3], data2[i+3], FuncNumDig); 
         }
         sum *= fract;
     }
@@ -109,7 +112,7 @@ void testEfficientFractPow(int N, int rep, unsigned NumDig, bool bRootOnly) {
     uint64_t TotalQty = rep * N * 4;
     cout << "Ignore: " << sum << endl;
     cout << "Pows computed: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(T).name() << endl;
-    cout << "Milllions of efficient fract Pows (bRootOnly = "  << bRootOnly << " per sec: " << (float(TotalQty) / t) << " numDig = " << NumDig << endl;
+    cout << "Milllions of efficient fract Pows (bRootOnly = "  << bRootOnly << " per sec: " << (float(TotalQty) / t) << " FuncNumDig = " << FuncNumDig << " DataNumDig = " << DataNumDig << endl;
     
 }
 
@@ -123,7 +126,7 @@ int main() {
             for (uint64_t intFract = 0; intFract < MaxFract; ++intFract) {
               float fract = float(intFract) / float(MaxFract);
               float v1 = pow(a, fract);
-              float v2 = EfficientFractPow(a, fract, NumDig);
+              float v2 = EfficientFractPow(a, fract, MaxNumDig);
             
               if (v2 < 1 || fabs(v1/v2 - 1) > 1e-5) {
                   cerr << "Bug1 in the EfficientFractPow! Exponent " << NumDig  << endl;
@@ -135,8 +138,8 @@ int main() {
     }
 
     for (uint64_t NumDig = 1; NumDig <= MaxNumDig; ++NumDig) {
-        testEfficientFractPow<float>(1000, 100, NumDig, true);
-        testEfficientFractPow<float>(1000, 100, NumDig, false);
+        testEfficientFractPow<float>(1000, 100, MaxNumDig, NumDig, true);
+        testEfficientFractPow<float>(1000, 100, MaxNumDig, NumDig, false);
         testPow<float>(10000, 100, NumDig);
     }
 }
