@@ -5,4 +5,4 @@ all:
 	make -f makefile_novec.gcc_asm
 
 clean:
-	rm -f testalign_crash testalign_nocrash *.s
+	rm -f testalign_crash testalign_nocrash gcc unaligned_test_manually_fixed
