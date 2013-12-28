@@ -13,3 +13,4 @@ To compile vectorized_manually_fixed.s, type:
 gcc vectorized_manually_fixed.s -lstdc++ -o unaligned_test_manually_fixed
 
 See, the blog entry for details:
+http://searchivarius.org/blog/what-you-must-know-about-alignment-21st-century
