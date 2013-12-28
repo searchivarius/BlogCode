@@ -1,0 +1,7 @@
+CXXFLAGS+=-I.. -Ofast -g -Wall -std=c++11 -DHAVE_CXX0X -mavx  -ftree-vectorize 
+
+testalign.s: testalign.cpp
+	$(CXX)  $(CXXFLAGS) testalign.cpp  -S -o vectorized.asm
+
+clean:
+	rm -f $(BINS) *.o *.s

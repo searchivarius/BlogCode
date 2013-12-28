@@ -1,0 +1,12 @@
+CXX=/opt/intel/bin/icpc
+BINS=testalign 
+
+CXXFLAGS+=-I..  -Ofast -Wall -std=c++11 -DHAVE_CXX0X -xAVX  -mkl -vec -ax
+
+all: $(BINS)
+
+testalign:  testalign.o
+	$(CXX)  testalign.o -o testalign 
+
+clean:
+	rm -f $(BINS) *.o

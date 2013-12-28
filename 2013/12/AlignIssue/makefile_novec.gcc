@@ -1,0 +1,11 @@
+BINS=testalign_nocrash
+
+CXXFLAGS+=-I.. -Ofast -g -Wall -std=c++11 -DHAVE_CXX0X -mavx  -fno-tree-vectorize 
+
+all: $(BINS)
+
+testalign_nocrash:  
+	$(CXX) $(CXXFLAGS) testalign.cpp -o testalign_nocrash 
+
+clean:
+	rm -f $(BINS) *.o

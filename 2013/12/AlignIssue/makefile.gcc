@@ -1,0 +1,11 @@
+BINS=testalign_crash
+
+CXXFLAGS+=-I.. -Ofast -g -Wall -std=c++11 -DHAVE_CXX0X -mavx  -ftree-vectorize 
+
+all: $(BINS)
+
+testalign_crash:  
+	$(CXX)  $(CXXFLAGS) testalign.cpp -o testalign_crash 
+
+clean:
+	rm -f $(BINS) *.o
