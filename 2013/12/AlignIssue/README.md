@@ -1,4 +1,4 @@
-Show how vectorization may cause a segfault.
+An example of vectorization combined with unaligned data causing a segfault.
 
 Tested on Intel core-i7 with g++-4.7
 
