@@ -18,20 +18,18 @@ double dist(const double*x,const double*y,size_t qty){
   return res;
 }
 
+// Uncomment this line to see which signal handler is activated.
+//#ifdef CATCH_SIGBUS
 #ifdef CATCH_SIGBUS
 //Based http://stackoverflow.com/questions/13834643/catch-sigbus-in-c-and-c
 void
-bus_handler(int sig, siginfo_t *si, void *vuctx)
+seg_handler(int sig, siginfo_t *si, void *vuctx)
 {
-        char buf[2];
 #if 1
-        /*                                                                                                                           
-         * I happen to know that si_code can only be 1, 2 or 3 on this                                                               
-         * particular system, so we only need to handle one digit.                                                                   
-         */
-        buf[0] = '0' + si->si_code;
-        buf[1] = '\n';
-        (void)write(STDERR_FILENO, buf, sizeof(buf));
+        const char *msg = "SEG FAULT!\n";
+        
+        ssize_t res = write(STDERR_FILENO, msg, strlen(msg));
+        res = res * res; // to shut up the warning
 #else
         /*                                                                                                                           
          * This is a trick I sometimes use for debugging , this will                                                                 
@@ -43,23 +41,42 @@ bus_handler(int sig, siginfo_t *si, void *vuctx)
         _exit(1);
 }
 
+void
+bus_handler(int sig, siginfo_t *si, void *vuctx)
+{
+        const char *msg = "BUS FAULT!\n";
+        
+        ssize_t res = write(STDERR_FILENO, msg, strlen(msg));
+        res = res * res; // to shut up the warning
+
+        _exit(1);
+}
 
 #endif
 
 
 int main(int,char**) {
 #ifdef CATCH_SIGBUS
-  struct sigaction sa;
+  {
+    struct sigaction sa;
 
-  memset(&sa, 0, sizeof(sa));
-  sa.sa_sigaction = bus_handler;
-  sa.sa_flags = SA_SIGINFO;
-  sigfillset(&sa.sa_mask);
-/* 
- * One can see that it is segfault that is generated, not SIGBUS:
- */
-  //sigaction(SIGBUS, &sa, NULL);
-  sigaction(SIGSEGV, &sa, NULL);
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = seg_handler;
+    sa.sa_flags = SA_SIGINFO;
+    sigfillset(&sa.sa_mask);
+    sigaction(SIGSEGV, &sa, NULL);
+  }
+
+  {
+   struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_sigaction = bus_handler;
+    sa.sa_flags = SA_SIGINFO;
+    sigfillset(&sa.sa_mask);
+ 
+    sigaction(SIGBUS, &sa, NULL);
+  }
 #endif
 
 
