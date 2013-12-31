@@ -4,7 +4,7 @@ CXXFLAGS+=-I.. -Ofast -g -Wall -std=c++11 -DHAVE_CXX0X -mavx  -ftree-vectorize
 
 all: $(BINS)
 
-testalign_crash:  
+testalign_crash: testalign.cpp
 	$(CXX)  $(CXXFLAGS) testalign.cpp -o testalign_crash 
 
 clean:
