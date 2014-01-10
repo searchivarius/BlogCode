@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <cmath>
 
 #include <string.h>
 
@@ -59,19 +60,21 @@ void Test(int SeqScenario, char *mem, size_t MemSize, size_t Qty, size_t Gap) {
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
-    cerr << "Usage: <amount of mem in gigs>" << endl;
+    cerr << "Usage: <amount of mem in gigs (fractional is fine)>" << endl;
     return 1;
   }
   const size_t Qty = 256UL * 1024UL * 1024UL;
 
-  size_t MemSize = atol(argv[1]) * 1024UL * 1024UL * 1024UL;
+  size_t MemSize = static_cast<size_t>(round(atof(argv[1]) * 1024.0 * 1024.0 * 1024.0));
+
+  cout << "Mem size: " << MemSize << " bytes" << endl;
 
   cout << "Allocating memory: " << MemSize << endl;
   
 
   char* mem = new char[MemSize];
 
-  for (size_t i = 0; i < MemSize; i += 1024)
+  for (size_t i = 0; i + 1024 < MemSize; i += 1024)
     memset(mem + i, rand() % 256, 1024);
 
   Test(0, mem, MemSize, Qty, 1024*127);
