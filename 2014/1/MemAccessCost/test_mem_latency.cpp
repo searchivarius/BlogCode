@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include <string.h>
+#include <sys/mman.h>
 
 #include "ztimer.h"
 
@@ -59,20 +60,30 @@ void Test(int SeqScenario, char *mem, size_t MemSize, size_t Qty, size_t Gap) {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
-    cerr << "Usage: <amount of mem in gigs (fractional is fine)>" << endl;
+  if (argc != 3) {
+    cerr << "Usage: <amount of mem in gigs (fractional is fine)> <use huge page>" << endl;
     return 1;
   }
   const size_t Qty = 256UL * 1024UL * 1024UL;
 
   size_t MemSize = static_cast<size_t>(round(atof(argv[1]) * 1024.0 * 1024.0 * 1024.0));
 
+  bool useHugePage = atol(argv[2]);
+
   cout << "Mem size: " << MemSize << " bytes" << endl;
+  cout << "Huge page: " << useHugePage << endl;
 
   cout << "Allocating memory: " << MemSize << endl;
   
+  char* mem = NULL;
 
-  char* mem = new char[MemSize];
+  if (useHugePage) { // As suggested by Nathan Kurz
+    mem = reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
+                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0));
+    madvise(mem, MemSize, MADV_HUGEPAGE);
+  } else {
+    mem = new char[MemSize];
+  }
 
   for (size_t i = 0; i + 1024 < MemSize; i += 1024)
     memset(mem + i, rand() % 256, 1024);
