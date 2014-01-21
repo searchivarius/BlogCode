@@ -4,6 +4,9 @@
  *
  * https://github.com/lemire/Code-used-on-Daniel-Lemire-s-blog/blob/master/2013/12/23/bitextract.cpp
  *
+ * See details in Daniel's blog:
+ * http://lemire.me/blog/archives/2013/12/23/even-faster-bitmap-decoding/
+ *
  */
 
 #include <stdio.h>
