@@ -21,7 +21,7 @@ void Test(size_t TotalQty) {
   ctm.reset();
 
   for (int i = 0; i < TotalQty; ++i) {
-    stringstream* str = new stringstream();    
+    ostringstream* str = new ostringstream();    
     sum += (size_t)str;
     delete str;
   }
@@ -36,7 +36,7 @@ void Test(size_t TotalQty) {
   cout << "================================================================================" << endl;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   const size_t Qty = 16UL * 1024UL * 1024UL;
 
   Test(Qty);
