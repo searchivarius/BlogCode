@@ -5,7 +5,9 @@ Works only for a new linux kernel that supports clearing of caches via:
 
 Example of use:
 
+ ```
 sudo ./test_disk 4096 128  [some directory to store test file]
+ ```
 
 The first parameter is the size of the file in MBs, the second parameter is the total amount of memory read in MBs. The third parameter is a directory where to place a (temporary) test file.
 
