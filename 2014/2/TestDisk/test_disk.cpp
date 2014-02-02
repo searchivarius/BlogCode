@@ -131,4 +131,9 @@ int main(int argc, char *argv[]) {
     inf.close();
     cout << "Ignore: " << ignore << endl; // to prevent from optimizing out
   } 
+
+  if (unlink(fn.c_str())) { 
+    cerr << "Can't delete temporary file: '" << fn << "', try to do it manually" << endl;
+    return 1;
+  }
 } 
