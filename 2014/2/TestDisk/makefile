@@ -1,4 +1,4 @@
-CXXFLAGS=-Wall  -std=c++0x -pedantic -Wold-style-cast -Wall -Wextra -Wcast-align -Wunsafe-loop-optimizations -Wcast-qual -I../.. -O3
+CXXFLAGS=-Wall  -std=c++0x -pedantic -Wold-style-cast -Wall -Wextra -Wcast-align -Wunsafe-loop-optimizations -Wcast-qual -I../.. -O3 -march=native
 
 test_disk: test_disk.o
 	 $(CXX) -o $@ test_disk.o

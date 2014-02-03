@@ -69,11 +69,11 @@ int main(int argc, char *argv[]) {
   }
 
   static char block[1024UL * 1024UL];
-  for (size_t i = 0; i < sizeof block; ++i) {
-    block[i] = rand() % 255; 
-  }
 
   for (size_t i = 0; i < fileSize / sizeof block; ++i) {
+    for (size_t i = 0; i < sizeof block; ++i) {
+      block[i] = rand() % 255; 
+    }
     if (!outf.write(block, sizeof block)) {
       cerr << "Cannot write to '" << fileName << "'" << endl;
     }
@@ -101,9 +101,8 @@ int main(int argc, char *argv[]) {
     WallClockTimer wtm;
     wtm.reset();
 
-    size_t ignore = 0;
-
     size_t maxBlock = fileSize / blockSize;
+    size_t ignore = 0;
 
 
     for (size_t i = 0; i < readQty; ++i) {
@@ -119,7 +118,7 @@ int main(int argc, char *argv[]) {
         cerr << "Can't read from '" << fn << "'" << endl;
         return 1;
       }
-      ignore += FakeCheckSum(block, blockSize);
+      ignore += FakeCheckSum(block, 32);
     }
     //cout << endl;
 
