@@ -27,6 +27,7 @@ void testRoot(int N, size_t MaxRoot, int rep) {
             sum += sqrt(data[i+2]); 
             sum += sqrt(data[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();

@@ -26,6 +26,7 @@ void testSin(int N, int rep) {
             sum += sin(data[i+2]); 
             sum += sin(data[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -53,6 +54,7 @@ void testCos(int N, int rep) {
             sum += cos(data[i+2]); 
             sum += cos(data[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -80,6 +82,7 @@ void testAtan(int N, int rep) {
             sum += atan(data[i+2]); 
             sum += atan(data[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();

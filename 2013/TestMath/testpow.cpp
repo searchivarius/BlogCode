@@ -217,6 +217,7 @@ void testPow(int N, int rep) {
             sum += pow(data1[i+2], data2[i+2]); 
             sum += pow(data1[i+3], data2[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -245,6 +246,7 @@ void testIntPowOptim0(int IntExp, int N, int rep) {
             sum += PowOptimPosExp0(data[i+2], IntExp); 
             sum += PowOptimPosExp0(data[i+3], IntExp); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -273,6 +275,7 @@ void testIntPowOptim1(int IntExp, int N, int rep) {
             sum += PowOptimPosExp1(data[i+2], IntExp); 
             sum += PowOptimPosExp1(data[i+3], IntExp); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -301,6 +304,7 @@ void testIntPowOptim2(int IntExp, int N, int rep) {
             sum += PowOptimPosExp2(data[i+2], IntExp); 
             sum += PowOptimPosExp2(data[i+3], IntExp); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -329,6 +333,7 @@ void testIntPow(int IntExp, int N, int rep) {
             sum += pow(data[i+2], IntExp); 
             sum += pow(data[i+3], IntExp); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
@@ -357,6 +362,7 @@ void testIntPowExplicitTemplate(int IntExp, int N, int rep) {
             sum += pow(data[i+2], (unsigned)IntExp); 
             sum += pow(data[i+3], (unsigned)IntExp); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();

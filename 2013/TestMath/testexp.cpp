@@ -14,7 +14,7 @@ void testExp(int N, int rep) {
     vector<T>   data(N*4);
 
     for (int i = 0; i < 4*N; ++i) {
-        data[i] = 1 + (rand() % 10000) / 10.0;
+        data[i] = 1 + (rand() % 10000) / 500.0;
     }
 
     WallClockTimer timer;

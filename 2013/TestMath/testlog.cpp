@@ -26,6 +26,7 @@ void testLog(int N, int rep) {
             sum += log(data[i+2]); 
             sum += log(data[i+3]); 
         }
+        sum /= N*4;
     }
     timer.split();
     uint64_t t = timer.elapsed();
