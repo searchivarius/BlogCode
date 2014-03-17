@@ -12,7 +12,9 @@ mkfifo input_pipe
 mkfifo output_pipe
 ```
 * Start the SENNA parser:
+```
 /senna_piped.sh input_pipe output_pipe
+```
 * Test from another console:
 ```
 ./test_pipe.sh input-small
