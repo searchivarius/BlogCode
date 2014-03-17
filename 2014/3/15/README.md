@@ -1,4 +1,4 @@
-An example of a modified SENNA parser that can be used in a "piped" mode, where input is sent through a named input pipe and the output is retrieved through a named output pipe.
+An example of a modified SENNA parser that can be used in a "piped" mode, where input is sent through a named input pipe and the output is retrieved through a named output pipe. This is described in the blog entry: http://searchivarius.org/blog/plumbing-named-pipes-simple-approach-wrap-standalone-nlp-tools
 
 * Download the SENNA parser version 3.0: http://ml.nec-labs.com/senna/ 
 * Replace the SENNA_main.c with the C-file from this repository.
