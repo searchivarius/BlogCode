@@ -13,3 +13,7 @@ Open the file code/src/main/resources/parsers/senna.yaml and modify the followin
 senna_home is a location of the compiled parser. tmp_dir is just any temporary directory.
 
 Finally, you can go to the code folder and start the script: launches/run_test.sh
+
+The main benchmarking module:
+
+https://github.com/searchivarius/BlogCode/blob/master/2014/5/UIMAAnnotSubiterator/code/src/main/java/edu/cmu/lti/oaqa/benchmark/Test.java
