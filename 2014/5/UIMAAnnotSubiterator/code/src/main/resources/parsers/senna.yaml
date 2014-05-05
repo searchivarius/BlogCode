@@ -1,0 +1,8 @@
+class: edu.cmu.lti.oaqa.senna.SennaAnnotator
+tmpdir: /tmp
+senna_home: /home/leo/senna
+senna_binary: senna
+senna_annot: SRL,CHK,POS,NER
+sentence_annot_type: org.cleartk.token.type.Sentence
+# This is the maximum value you can use with Senna
+sentence_max_len: 1023

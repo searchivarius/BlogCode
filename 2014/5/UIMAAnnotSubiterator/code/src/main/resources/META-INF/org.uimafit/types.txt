@@ -1,0 +1,3 @@
+classpath*:types/SennaTypes.xml
+classpath*:types/TypeSystem.xml
+classpath*:types/SourceDocumentInformation.xml

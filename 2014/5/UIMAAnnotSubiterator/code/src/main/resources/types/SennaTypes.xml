@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<typeSystemDescription xmlns="http://uima.apache.org/resourceSpecifier">
+  <name>SennaTypes</name>
+  <description>Type System Definition for annotators developed by Carnegie-Mellon University's Language Technology Institute</description>
+  <version>1.0</version>
+  <vendor>LTI</vendor>
+  <types>
+    <!-- TYPE: edu.cmu.lti.SemanticRole -->
+    <typeDescription>
+      <name>edu.cmu.lti.SemanticRole</name>
+      <description>An ASSERT predicate-target-argument annotation.  See the Feature attribute to find out more.</description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>Label</name>
+          <description>Semantic role played by the predicate argument or target</description>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>sequenceNumber</name>
+          <description>This is necessary to work around the default sorting within
+the CAS.  We'll keep our own sort order, thankyouverymuch.</description>
+          <rangeTypeName>uima.cas.Integer</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>Parent</name>
+          <description>Link to parent ("TARGET") role annotation</description>
+          <rangeTypeName>edu.cmu.lti.SemanticRole</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>Children</name>
+          <description/>
+          <rangeTypeName>uima.cas.FSArray</rangeTypeName>
+          <elementType>edu.cmu.lti.SemanticRole</elementType>
+        </featureDescription>
+      </features>
+    </typeDescription>
+    <!-- TYPE: edu.cmu.lti.POS -->
+    <typeDescription>
+      <name>edu.cmu.lti.POS</name>
+      <description>Part-Of-Speach (POS) tag.</description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>Tag</name>
+          <description>An actual POS-tag, e.g., NN or VP</description>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>  
+    </typeDescription>
+    <!-- TYPE: edu.cmu.lti.NamedEntity -->
+    <typeDescription>
+      <name>edu.cmu.lti.NamedEntity</name>
+      <description>Named entity.</description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>EntityType</name>
+          <description>A named entity type, such as ORG, LOC, or PER.</description>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>  
+    </typeDescription>
+    <!-- TYPE: edu.cmu.lti.Chunk -->
+    <typeDescription>
+      <name>edu.cmu.lti.Chunk</name>
+      <description></description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>ChunkType</name>
+          <description>A chunk type, e.g., NP or VP</description>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>  
+    </typeDescription>    
+  </types>
+</typeSystemDescription>

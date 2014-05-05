@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<styleMap>
+<rule>
+<pattern>ToolsNLP.Document</pattern>
+<label>Document</label>
+<style>color:black; background:lightblue;</style>
+</rule>
+<rule>
+<pattern>ToolsNLP.SourceDocumentInformation</pattern>
+<label>SourceDocumentInformation</label>
+<style>color:black; background:lightgreen;</style>
+</rule>
+</styleMap>
+

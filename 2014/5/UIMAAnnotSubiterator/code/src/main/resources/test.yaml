@@ -1,0 +1,36 @@
+configuration: 
+  name: oaqa-tutorial
+  author: oaqa
+collection-reader:
+  inherit: collection_reader.filesystem-collection-reader
+  InputDirectory: ../data
+  HtmlCleanerClass: cleaner.ExternalHtmlCleaner
+  extScript: ../scripts/html2text_delbrack.sh
+  
+pipeline:
+  - inherit: ecd.phase  
+    name: SentSplit
+    options: |
+      - inherit: sentsplit.sentsplit
+
+  - inherit: ecd.phase
+    name: SENNA
+    option-timeout: 600
+    options: |
+      - inherit: parsers.senna
+
+  # Test that uses subiterator
+  - inherit: ecd.phase
+    name: test1
+    options: |
+      - inherit: benchmark.test1
+  
+  # Test that does not use subiterator
+  - inherit: ecd.phase
+    name: test0
+    options: |
+      - inherit: benchmark.test0
+
+  #- inherit: cas_consumer.simple-print
+  #- inherit: cas_consumer.XmiWriterCasConsumer
+  #- inherit: cas_consumer.AnnotationPrinter

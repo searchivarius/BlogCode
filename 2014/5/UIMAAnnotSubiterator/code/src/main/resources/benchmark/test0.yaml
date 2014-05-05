@@ -1,0 +1,4 @@
+class: edu.cmu.lti.oaqa.benchmark.Test
+USE_SUBITER: false 
+
+
