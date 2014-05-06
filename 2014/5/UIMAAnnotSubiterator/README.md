@@ -1,6 +1,6 @@
 Benchmarking UIMA subiterator function. See a blog entry: http://searchivarius.org/blog/how-fast-uima-subiterator-function
 
-You need Java and a Senna Parser version 3.0 (http://ml.nec-labs.com/senna/).
+You need Java, Maven, and a Senna Parser version 3.0 (http://ml.nec-labs.com/senna/).
 My code uses slightly modified version of SENNA_main.c https://github.com/searchivarius/BlogCode/blob/master/2014/3/15  
 
 
@@ -12,7 +12,7 @@ Open the file code/src/main/resources/parsers/senna.yaml and modify the followin
 
 senna_home is a location of the compiled parser. tmp_dir is just any temporary directory.
 
-Finally, you can go to the code folder and start the script: launches/run_test.sh
+Finally, you can go to the *code* folder and start the script: launches/run_test.sh
 
 The main benchmarking module:
 
