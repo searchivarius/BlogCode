@@ -1,0 +1,14 @@
+# You may need to point it to the correct location
+# of the Intel compiler binary.
+CXX=/opt/intel/bin/icpc
+BINS=mm_extract_ps
+
+CXXFLAGS+=-I.. -mkl  -O3 -xAVX
+
+all: $(BINS)
+
+mm_extract_ps: mm_extract_ps.o
+	$(CXX) mm_extract_ps.o -o mm_extract_ps -static -mkl
+
+clean:
+	rm -f $(BINS) *.o
