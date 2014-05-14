@@ -1,7 +1,7 @@
 # You may need to point it to the correct location
 # of the Intel compiler binary.
 CXX=/opt/intel/bin/icpc
-BINS=mm_extract_ps
+BINS=mm_extract_ps  mm_extract_pd
 
 CXXFLAGS+=-I.. -mkl  -O3 -xAVX
 
@@ -9,6 +9,9 @@ all: $(BINS)
 
 mm_extract_ps: mm_extract_ps.o
 	$(CXX) mm_extract_ps.o -o mm_extract_ps -static -mkl
+
+mm_extract_pd: mm_extract_pd.o
+	$(CXX) mm_extract_pd.o -o mm_extract_pd -static
 
 clean:
 	rm -f $(BINS) *.o

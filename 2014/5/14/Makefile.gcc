@@ -1,4 +1,4 @@
-BINS=mm_extract_ps
+BINS=mm_extract_ps mm_extract_pd
 
 CXXFLAGS+=-I..  -static -Ofast -march=native
 
@@ -6,6 +6,9 @@ all: $(BINS)
 
 mm_extract_ps: mm_extract_ps.o
 	$(CXX) mm_extract_ps.o -o mm_extract_ps -static
+
+mm_extract_pd: mm_extract_pd.o
+	$(CXX) mm_extract_pd.o -o mm_extract_pd -static
 
 clean:
 	rm -f $(BINS) *.o
