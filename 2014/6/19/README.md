@@ -3,3 +3,6 @@ The original version (extracted from the Google's  Google C++ Test Framework was
 published by [Fred Richards](http://www.working-software.com/node/35).
 
 Usage examples are given in [test.cpp](test.cpp)
+
+PS: this is an illustration [of a blog post](http://searchivarius.org/blog/neat-code-compare-floating-point-numbers).
+
