@@ -99,15 +99,18 @@ public:
         return ULP_diff(bits_, rhs.bits_) <= maxUlps;
     }
 
+    //
+    // Don't use this function if the numbers are potentially NAN-values!
+    //
     Bits ULP_diff(const FloatingPointDiff& rhs) const {
         return ULP_diff(bits_, rhs.bits_);
     }
  
-private:
     bool is_nan() const {
         return ((kExpBitMask & bits_) == kExpBitMask) &&
 	        ((kFracBitMask & bits_) != 0);
     }
+private:
  
     Bits SignAndMagnitudeToBiased(const Bits& sam) const {
         if (kSignBitMask & sam) {
