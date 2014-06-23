@@ -38,6 +38,17 @@ int main()
 
     cout << endl << "**********************************" << endl << endl;
 
+    { // Testing floats close to 0
+      test(0.0f, numeric_limits<float>::min(), 4);
+
+      // Testing small floats
+      float x = numeric_limits<float>::min();
+
+      test(x, x * (1 + 2 * numeric_limits<float>::epsilon()), 4);
+    }
+
+    cout << endl << "**********************************" << endl << endl;
+
     { // Testing double
       double x = 3.14159625;
 
@@ -45,6 +56,17 @@ int main()
       test(x, x * (1 + 3 * numeric_limits<double>::epsilon()), 4);
       test(x, x * (1 + 4 * numeric_limits<double>::epsilon()), 6);
       test(x, x * (1 + 5 * numeric_limits<double>::epsilon()), 6);
+    }
+
+    cout << endl << "**********************************" << endl << endl;
+
+    { // Testing doubles close to 0
+      test(0.0, numeric_limits<double>::min(), 4);
+
+      // Testing small floats
+      double x = numeric_limits<double>::min();
+
+      test(x, x * (1 + 2 * numeric_limits<double>::epsilon()), 4);
     }
 
     cout << endl << "**********************************" << endl << endl;
