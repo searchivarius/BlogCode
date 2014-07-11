@@ -1,6 +1,6 @@
 BINS=testapproxlog 
 
-CXXFLAGS+=-I..  -static -Ofast -march=native -std=c++11
+CXXFLAGS+=-I..  -static -Ofast -march=native -std=c++11 -D__extern_always_inline=inline
 
 all: $(BINS)
 
