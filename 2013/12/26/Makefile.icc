@@ -1,9 +1,9 @@
 # You may need to point it to the correct location
 # of the Intel compiler binary.
-CXX=/opt/intel/bin/icpc
+CXX=icpc
 BINS=testapproxlog 
 
-CXXFLAGS+=-I.. -mkl  -O3 -xAVX -std=c++11
+CXXFLAGS+=-I.. -mkl  -O3 -xAVX 
 
 all: $(BINS)
 
