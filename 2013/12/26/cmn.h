@@ -1,7 +1,6 @@
 #ifndef CMN_H
 #define CMN_H
 
-#include <stdexcept>
 #include <iostream>
 #include <random>
 
