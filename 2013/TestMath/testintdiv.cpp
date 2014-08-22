@@ -236,10 +236,10 @@ void testDiv32Double(size_t N, size_t rep,
     for(size_t j = 0; j < N; j++){            
 
         for(size_t i = 0; i < rep; ++i) {
-            sum += (uint32_t)(double)b1/c1; b1++;
-            sum += (uint32_t)(double)b2/c2; b2++;
-            sum += (uint32_t)(double)b3/c3; b3++;
-            sum += (uint32_t)(double)b4/c4; b4++;
+            sum += uint32_t(double(b1)/c1); b1++;
+            sum += uint32_t(double(b2)/c2); b2++;
+            sum += uint32_t(double(b3)/c3); b3++;
+            sum += uint32_t(double(b4)/c4); b4++;
         }
     }
 
