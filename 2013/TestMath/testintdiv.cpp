@@ -227,6 +227,32 @@ void testDiv32Scalar(size_t N, size_t rep,
     cout << "=============================" << endl;
 }
 
+void testDiv32Double(size_t N, size_t rep, 
+                  uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
+                  uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4) {
+    uint32_t sum = 0;
+    WallClockTimer timer;
+
+    for(size_t j = 0; j < N; j++){            
+
+        for(size_t i = 0; i < rep; ++i) {
+            sum += (uint32_t)(double)b1/c1; b1++;
+            sum += (uint32_t)(double)b2/c2; b2++;
+            sum += (uint32_t)(double)b3/c3; b3++;
+            sum += (uint32_t)(double)b4/c4; b4++;
+        }
+    }
+
+    timer.split();
+    uint64_t t = timer.elapsed();
+    uint64_t TotalQty = rep * N * 4;
+    cout << __func__ << endl;
+    cout << "Ignore: " << sum << endl;
+    cout << "32-bit Integer DIVs computed via conversion to double: " << TotalQty << ", time " <<  t / 1e3 << " ms, type: " << typeid(uint32_t).name() << endl;
+    cout << "Milllions of 32-bit integer DIVs  via conversion to double per sec: " << (float(TotalQty) / t) << endl;
+    cout << "=============================" << endl;
+}
+
 void testDiv32VectorDouble(size_t N, size_t rep, 
                    uint32_t b1, uint32_t b2, uint32_t b3, uint32_t b4, 
                    uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4) {
@@ -368,6 +394,8 @@ void TestSmallNum() {
     cout << b7 << " -> " << c7 << ": " << b7/c7 << endl;
     cout << b8 << " -> " << c8 << ": " << b8/c8 << endl;
 
+    cout << "=============================" << endl;
+
     testDiv16Scalar(2000000, 16, b1, b2, b3, b4, b5, b6, b7, b8,
                                  c1, c2, c3, c4, c5, c6, c7, c8);
     testDiv16VectorFloat(2000000, 16, b1, b2, b3, b4, b5, b6, b7, b8,
@@ -401,7 +429,11 @@ void TestLargeNum() {
     cout << b3 << " -> " << c3 << ": " << b3/c3 << endl;
     cout << b4 << " -> " << c4 << ": " << b4/c4 << endl;
 
+
+    cout << "=============================" << endl;
+
     testDiv32Scalar(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
+    testDiv32Double(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
 #ifdef __INTEL_COMPILER
     testDiv32VectorIntel(2000000, 16, b1, b2, b3, b4, c1, c2, c3, c4);
 #endif
