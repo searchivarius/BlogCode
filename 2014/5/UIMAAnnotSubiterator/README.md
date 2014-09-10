@@ -1,4 +1,7 @@
-Benchmarking UIMA subiterator function. See a blog entry: http://searchivarius.org/blog/how-fast-uima-subiterator-function
+Benchmarking UIMA subiterator function. See blog entries: 
+
+http://searchivarius.org/blog/how-fast-uima-subiterator-function
+http://searchivarius.org/blog/selectcovered-substantially-better-version-uima-subiterator
 
 You need Java, Maven, html2text (Unix utility), and a Senna Parser version 3.0 (http://ml.nec-labs.com/senna/).
 My code uses slightly modified version of SENNA_main.c https://github.com/searchivarius/BlogCode/blob/master/2014/3/15  
