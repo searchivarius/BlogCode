@@ -15,35 +15,38 @@
  */
 package edu.cmu.lti.oaqa.benchmark;
 
+import java.util.List;
+
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_component.JCasAnnotator_ImplBase;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.cas.CAS;
 import org.apache.uima.cas.FSIterator;
+import org.apache.uima.cas.text.AnnotationFS;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
-
 import org.cleartk.token.type.Sentence;
-
+import org.uimafit.util.CasUtil;
 
 import edu.cmu.lti.POS;
 
 /**
  * 
- * Testing efficiency of subiterator in UIMA.
+ * Testing efficiency of subiterator in UIMA and selectCovered in UIMA-fit.
  * 
  * @author Leonid Boytsov
  *
  */
 public class Test extends JCasAnnotator_ImplBase {
-  boolean mUseSubiter = false;
+  Integer mSubiterChoice = 0;
   
   @Override
   public void initialize(UimaContext aContext)
   throws ResourceInitializationException {
     super.initialize(aContext);
     
-    mUseSubiter = (Boolean) aContext.getConfigParameterValue("USE_SUBITER");
+    mSubiterChoice = (Integer) aContext.getConfigParameterValue("SUBITER_CHOICE");
   }  
   
   @Override
@@ -61,7 +64,7 @@ public class Test extends JCasAnnotator_ImplBase {
           counter++, sentenceIterator.moveToNext()) {
        Annotation  sentence = sentenceIterator.get();
        
-       if (mUseSubiter) {
+       if (mSubiterChoice == 1) {
          FSIterator<Annotation> subIter = AnnotUtils.getSubIterator(aJCas,
                                                                POS.typeIndexID,
                                                                sentence, true);         
@@ -69,7 +72,28 @@ public class Test extends JCasAnnotator_ImplBase {
            ++qty;
            subIter.moveToNext();
          }
-
+       
+       } else if (mSubiterChoice == 2) {
+    	 CAS cas = aJCas.getCas();
+         List<AnnotationFS> subIter = CasUtil.selectCovered(
+        		 											   cas,
+        		 											   CasUtil.getType(cas, POS.class),
+                                                               sentence);
+         
+         for (AnnotationFS a:subIter) {
+           ++qty;
+         }
+       } else if (mSubiterChoice == 3) {
+    	 CAS cas = aJCas.getCas();
+    	 /* This one is supposed to be substantially slower !!!! */
+         List<AnnotationFS> subIter = CasUtil.selectCovered(
+        		 											   cas,
+        		 											   CasUtil.getType(cas, POS.class),
+                                                               sentence.getBegin(),sentence.getEnd());
+         
+         for (AnnotationFS a:subIter) {
+           ++qty;
+         }
        } else {
          FSIterator<Annotation> subIter = AnnotUtils.getIterator(aJCas,
                                                                 POS.typeIndexID);
@@ -93,7 +117,7 @@ public class Test extends JCasAnnotator_ImplBase {
     float diff = System.currentTimeMillis() - start;
     
     System.out.println("===============================================\n");
-    System.out.println("Use index: " + mUseSubiter + " time: " + diff + 
+    System.out.println("Subiter choice index: " + mSubiterChoice + " time: " + diff + 
                        " ms, # of POS tags: " + qty + 
                        " spent one annot: " + (diff/qty) + " ms");
     System.out.println("\n\n===============================================");
