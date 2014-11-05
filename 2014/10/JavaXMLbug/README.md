@@ -15,3 +15,4 @@ OpenJDK 64-Bit Server VM (build 24.51-b03, mixed mode)
 
 **It doesn't seem to depend on locale settings.**
 
+The bug doesn't seem to exist in Java 8.
