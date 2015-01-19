@@ -1,0 +1,14 @@
+# You may need to point it to the correct location
+# of the Intel compiler binary.
+CXX=/opt/intel/bin/icc
+BINS=testmemset
+
+CXXFLAGS+= -O3 -std=c++11  -DHAVE_CXX0X  -march=native
+
+all: $(BINS)
+
+testpow: testmemset.o
+	$(CXX) testmemset.o -o testmemset -static 
+
+clean:
+	rm -f $(BINS) *.o

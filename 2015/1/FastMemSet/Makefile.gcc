@@ -1,0 +1,11 @@
+BINS=testmemset
+
+CXXFLAGS+= -static -Ofast -std=c++11 -DHAVE_CXX0X  -march=native
+
+all: $(BINS)
+
+testpow: testmemset.o
+	$(CXX) testmemset.o -o testmemset -static
+
+clean:
+	rm -f $(BINS) *.o
