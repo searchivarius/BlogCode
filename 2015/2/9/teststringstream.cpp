@@ -53,7 +53,7 @@ void test2(int N, int rep) {
 
     for (int i = 0; i < N; i++) {
       stringstream str;
-      //str << i << " " << j; 
+      str << i << " " << j; 
       sum += reinterpret_cast<size_t>(str.str().c_str());
     }
 
