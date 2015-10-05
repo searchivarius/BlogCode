@@ -46,6 +46,12 @@ void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize,
 }; 
 
 int main(int,char**) {
+  cout << "Small object tests";
+  test(1000*1024, 1, 32, 10);
+  test(1000*1024, 1, 1*1024, 10);
+  test(1000*1024, 1, 4*1024, 10);
+
+  cout << "Large object tests";
   test(1000, 1, 32*1024, 10000);
   test(1000, 1, 1*1024*1024, 10000);
   test(1000, 1, 4*1024*1024, 10000);
