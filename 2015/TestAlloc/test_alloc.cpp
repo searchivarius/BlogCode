@@ -26,11 +26,14 @@ void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize,
   size_t sum = 0, totOpQty;
 
   for (unsigned i = 0; i < repQty; ++i) { 
-
     for (unsigned j = 0; j < allocQty; ++j) {
-      size_t randSize = minAllocSize + rand() % (maxAllocSize - minAllocSize); 
+      size_t randSize = max<size_t>(minAllocSize + rand() % (maxAllocSize - minAllocSize),1); 
+      size_t randBytePos = rand() % randSize;
+      char   randByte = (char) rand() & 255;
       addr[start1 + j] = malloc(randSize);
-      sum += (size_t) addr[start1 + j];
+      ((char*)addr[start1 + j])[randBytePos] = randByte; // Modify a byte so that the page isn't all zeros any more
+      // Above it's ensured randSize >= sizeof(size_t)
+      sum += ((char*)addr[start1 + j])[randBytePos];
       free(addr[start2 + j]);
       totOpQty += 2;
     }
@@ -55,5 +58,11 @@ int main(int,char**) {
   test(1000, 1, 32*1024, 10000);
   test(1000, 1, 1*1024*1024, 10000);
   test(1000, 1, 4*1024*1024, 10000);
+
+  cout << "Very large object tests";
+  test(100, 1, 320*1024, 10000);
+  test(100, 1, 10*1024*1024, 10000);
+  test(100, 1, 40*1024*1024, 10000);
+
   return 0;
 };
