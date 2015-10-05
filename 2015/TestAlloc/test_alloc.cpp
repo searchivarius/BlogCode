@@ -16,7 +16,7 @@
 
 using namespace std;
 
-void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize, unsigned repQty) {
+void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize, unsigned repQty, bool bNonZero) {
   vector<void*> addr(2*allocQty);
 
   size_t start1 = 0, start2 = allocQty;
@@ -28,9 +28,12 @@ void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize,
   for (unsigned i = 0; i < repQty; ++i) { 
     for (unsigned j = 0; j < allocQty; ++j) {
       size_t randSize = max<size_t>(minAllocSize + rand() % (maxAllocSize - minAllocSize),1); 
+      addr[start1 + j] = malloc(randSize);
+      if (bNonZero) {
+        memset(addr[start1 + j], 255, randSize);
+      }
       size_t randBytePos = rand() % randSize;
       char   randByte = (char) rand() & 255;
-      addr[start1 + j] = malloc(randSize);
       ((char*)addr[start1 + j])[randBytePos] = randByte; // Modify a byte so that the page isn't all zeros any more
       // Above it's ensured randSize >= sizeof(size_t)
       sum += ((char*)addr[start1 + j])[randBytePos];
@@ -44,25 +47,28 @@ void test(size_t allocQty, const size_t minAllocSize, const size_t maxAllocSize,
   uint64_t   total = timer.split();
 
   cout << "Ignore: " << sum << endl;
+  cout << "Memsetting allocating memory: " << bNonZero << endl; 
   cout << "The # of alloc/free operations: " << totOpQty << " Elapsed: " << total / 1e3 << " ms "; 
   cout << "Each operation took: " << total / 1e3 / float(totOpQty) << " ms" << endl;
 }; 
 
 int main(int,char**) {
-  cout << "Small object tests";
-  test(1000*1024, 1, 32, 10);
-  test(1000*1024, 1, 1*1024, 10);
-  test(1000*1024, 1, 4*1024, 10);
+  for (int flag = 0; flag < 2; ++flag) {
+    cout << "Small object tests";
+    test(1000*1024, 1, 32, 10, flag != 0);
+    test(1000*1024, 1, 1*1024, 10, flag != 0);
+    test(1000*1024, 1, 4*1024, 10, flag != 0);
 
-  cout << "Large object tests";
-  test(1000, 1, 32*1024, 10000);
-  test(1000, 1, 1*1024*1024, 10000);
-  test(1000, 1, 4*1024*1024, 10000);
+    cout << "Large object tests";
+    test(1000, 1, 32*1024, 20, flag != 0);
+    test(1000, 1, 1*1024*1024, 20, flag != 0);
+    test(1000, 1, 4*1024*1024, 20, flag != 0);
 
-  cout << "Very large object tests";
-  test(100, 1, 320*1024, 10000);
-  test(100, 1, 10*1024*1024, 10000);
-  test(100, 1, 40*1024*1024, 10000);
+    cout << "Very large object tests";
+    test(100, 1, 320*1024, 10000, flag != 0);
+    test(100, 1, 10*1024*1024, 100, flag != 0);
+    test(100, 1, 40*1024*1024, 100, flag != 0);
+  }
 
   return 0;
 };
