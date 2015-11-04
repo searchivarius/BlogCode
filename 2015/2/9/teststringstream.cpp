@@ -64,7 +64,35 @@ void test2(int N, int rep) {
   cout << " total # of construct/destruct/proc: " << rep * N << ", time " <<  total / 1e3 << " ms" << " Construct/destruct/proc per sec: " << (rep * N * 1e6 / total ) << endl;
 }
 
+void test3(int N, int rep) {
+  WallClockTimer timer;
+
+  uint64_t total = 0;
+
+  uint64_t sum = 0;
+
+  string       emptyStr;
+  stringstream str;
+
+  for (int j = 0; j < rep; ++j) {
+
+    timer.reset();
+
+    for (int i = 0; i < N; i++) {
+      str.str(emptyStr);
+      str << i << " " << j; 
+      sum += reinterpret_cast<size_t>(str.str().c_str());
+    }
+
+    total += timer.split();
+  }
+
+  cout << "Ignore: " << sum << endl;
+  cout << " total # of proc without construct/deconstruct: " << rep * N << ", time " <<  total / 1e3 << " ms" << " proc per sec: " << (rep * N * 1e6 / total ) << endl;
+}
+
 int main() {
+  test3(1024*1024, 10);
   test1(1024*1024, 10);
   test2(1024*1024, 10);
 }
