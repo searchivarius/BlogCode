@@ -80,8 +80,12 @@ void test(int N, int custom, int rep) {
   }
 
   cout << "Ignore: " << sum << endl;
+  cout << "Number of integers " << N << " bits: " << size_t(N) * 8 << " in a batch" << endl;
   cout << "Custom flag = " << custom;
-  cout << " total zeroed: " << rep * N << ", time " <<  total / 1e3 << " ms" << " Ints per sec: " << (rep * N * 1e6 / total ) << endl;
+  cout << " total zeroed: " << rep * N << ", time " <<  total / 1e3 << " ms" 
+                            << " Ints per sec: " <<   (rep * N * 1e6 / total ) 
+                            << " Bits per sec: " << 8*sizeof(data[0])*(rep * N * 1e6 / total ) 
+                            << endl;
 }
 
 int main() {
