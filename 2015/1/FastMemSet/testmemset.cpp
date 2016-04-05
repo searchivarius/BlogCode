@@ -87,6 +87,7 @@ void test(int N, int custom, int rep) {
 int main() {
   for (int custom = 0; custom < 3; ++custom) {
     cout << "========= Custom: " << custom << "======================" << endl;
+    test(8*1024* 1024, custom, 1);
     test(1024* 1024, custom, 8);
     test(256* 1024,  custom, 32);
     test(64* 1024,   custom, 128);
