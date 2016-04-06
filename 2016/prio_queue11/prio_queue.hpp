@@ -17,6 +17,9 @@
 #include <vector>
 #include <cassert>
 #include <tuple>
+
+#include <cpp14.hpp>
+
 // No type traits, we will redefine enable_if* ourselves
 //#include <type_traits>
 
@@ -31,15 +34,6 @@
 
 namespace rollbear
 {
-
-template<bool B, class T = void>
-struct enable_if {};
- 
-template<class T>
-struct enable_if<true, T> { typedef T type; };
-
-template <bool B, typename T = void>
-using enable_if_t = typename enable_if<B, T>::type;
 
 namespace prio_q_internal
 {
@@ -73,11 +67,11 @@ public:
   std::size_t size() const noexcept;
 private:
   template <typename U = T>
-  rollbear::enable_if_t<std::is_pod<U>::value>
+  cpp14::enable_if_t<std::is_pod<U>::value>
   destroy() noexcept { }
 
   template <typename U = T>
-  rollbear::enable_if_t<!std::is_pod<U>::value>
+  cpp14::enable_if_t<!std::is_pod<U>::value>
   destroy() noexcept(std::is_nothrow_destructible<T>::value);
 
   template <typename U>
@@ -85,18 +79,18 @@ private:
 
   template <typename U = T>
   static
-  rollbear::enable_if_t<std::is_pod<U>::value>
+  cpp14::enable_if_t<std::is_pod<U>::value>
   move_to(T const *b, std::size_t s, T *ptr) noexcept;
 
   template <typename U = T>
-  rollbear::enable_if_t<
+  cpp14::enable_if_t<
       !std::is_pod<U>::value && std::is_nothrow_move_constructible<U>::value>
   move_to(T *b, std::size_t s, T *ptr)
       noexcept(std::is_nothrow_destructible<T>::value);
 
 
   template <typename U = T>
-  rollbear::enable_if_t<!std::is_nothrow_move_constructible<U>::value>
+  cpp14::enable_if_t<!std::is_nothrow_move_constructible<U>::value>
   move_to(T const *b, std::size_t s, T *ptr)
       noexcept(std::is_nothrow_copy_constructible<T>::value
           && std::is_nothrow_destructible<T>::value);
@@ -183,7 +177,7 @@ back() const noexcept
 
 template <typename T, std::size_t block_size, typename Allocator>
 template <typename U>
-rollbear::enable_if_t<!std::is_pod<U>::value>
+cpp14::enable_if_t<!std::is_pod<U>::value>
 skip_vector<T, block_size, Allocator>::
 destroy() noexcept(std::is_nothrow_destructible<T>::value)
 {
@@ -261,7 +255,7 @@ grow(U &&u)
 
 template <typename T, std::size_t block_size, typename Allocator>
 template <typename U>
-rollbear::enable_if_t<std::is_pod<U>::value>
+cpp14::enable_if_t<std::is_pod<U>::value>
 skip_vector<T, block_size, Allocator>::
 move_to(T const *b, std::size_t s, T *ptr) noexcept
 {
@@ -270,7 +264,7 @@ move_to(T const *b, std::size_t s, T *ptr) noexcept
 
 template <typename T, std::size_t block_size, typename Allocator>
 template <typename U>
-rollbear::enable_if_t<
+cpp14::enable_if_t<
     !std::is_pod<U>::value && std::is_nothrow_move_constructible<U>::value>
 skip_vector<T, block_size, Allocator>::
 move_to(T *b,
@@ -289,7 +283,7 @@ move_to(T *b,
 
 template <typename T, std::size_t block_size, typename Allocator>
 template <typename U>
-rollbear::enable_if_t<!std::is_nothrow_move_constructible<U>::value>
+cpp14::enable_if_t<!std::is_nothrow_move_constructible<U>::value>
 skip_vector<T, block_size, Allocator>::
 move_to(T const *b, std::size_t s, T *ptr) noexcept(
 std::is_nothrow_copy_constructible<T>::value
@@ -383,9 +377,9 @@ class payload<block_size, void, Allocator>
 public:
   payload(Allocator const & = Allocator{ }) { }
   constexpr bool back() const { return true; }
-  constexpr void store(std::size_t, bool) const { }
-  constexpr void move(std::size_t, std::size_t) const { }
-  constexpr void pop_back() const { };
+  void store(std::size_t, bool) const { }
+  void move(std::size_t, std::size_t) const { }
+  void pop_back() const { };
 };
 
 } // namespace prio_q_internal
@@ -407,29 +401,29 @@ public:
   using payload_type = V;
 
   template <typename U, typename X = V>
-  rollbear::enable_if_t<std::is_same<X, void>::value>
+  cpp14::enable_if_t<std::is_same<X, void>::value>
   push(U &&u);
 
   template <typename U, typename X>
-  rollbear::enable_if_t<!std::is_same<X, void>::value>
+  cpp14::enable_if_t<!std::is_same<X, void>::value>
   push(U &&key, X &&value);
 
   template <typename U = V>
-  rollbear::enable_if_t<std::is_same<U, void>::value, value_type const &>
+  cpp14::enable_if_t<std::is_same<U, void>::value, value_type const &>
   top() const noexcept;
 
   template <typename U = V>
-  rollbear::enable_if_t<!std::is_same<U, void>::value, std::pair<T const &, U &>>
+  cpp14::enable_if_t<!std::is_same<U, void>::value, std::pair<T const &, U &>>
   top() noexcept;
 
   void pop() noexcept(std::is_nothrow_destructible<T>::value);
 
   template <typename U=V>
-  rollbear::enable_if_t<!std::is_same<U, void>::value>
+  cpp14::enable_if_t<!std::is_same<U, void>::value>
   reschedule_top(T t);
 
   template <typename U=V>
-  rollbear::enable_if_t<std::is_same<U, void>::value>
+  cpp14::enable_if_t<std::is_same<U, void>::value>
   reschedule_top(T t);
 
   bool empty() const noexcept;
@@ -449,7 +443,7 @@ private:
 template <std::size_t block_size, typename T, typename V, typename Compare, typename Allocator>
 template <typename U, typename X>
 inline
-rollbear::enable_if_t<std::is_same<X, void>::value>
+cpp14::enable_if_t<std::is_same<X, void>::value>
 prio_queue<block_size, T, V, Compare, Allocator>::
 push(U &&u)
 {
@@ -460,7 +454,7 @@ template <std::size_t block_size, typename T, typename V, typename Compare,
                                   typename Allocator>
 template <typename U, typename X>
 inline
-rollbear::enable_if_t<!std::is_same<X, void>::value>
+cpp14::enable_if_t<!std::is_same<X, void>::value>
 prio_queue<block_size, T, V, Compare, Allocator>::
 push(U &&key, X &&value)
 {
@@ -543,7 +537,7 @@ template <std::size_t block_size, typename T, typename V, typename Compare,
                                   typename Allocator>
 template <typename U>
 inline
-rollbear::enable_if_t<std::is_same<U, void>::value, T const &>
+cpp14::enable_if_t<std::is_same<U, void>::value, T const &>
 prio_queue<block_size, T, V, Compare, Allocator>::
 top()
 const
@@ -557,7 +551,7 @@ template <std::size_t block_size, typename T, typename V, typename Compare,
                                   typename Allocator>
 template <typename U>
 inline
-rollbear::enable_if_t<!std::is_same<U, void>::value, std::pair<T const &, U &>>
+cpp14::enable_if_t<!std::is_same<U, void>::value, std::pair<T const &, U &>>
 prio_queue<block_size, T, V, Compare, Allocator>::
 top()
 noexcept
@@ -569,7 +563,7 @@ noexcept
 template <std::size_t block_size, typename T, typename V, typename Compare, typename Allocator>
 template <typename U>
 inline
-rollbear::enable_if_t<!std::is_same<U, void>::value>
+cpp14::enable_if_t<!std::is_same<U, void>::value>
 prio_queue<block_size, T, V, Compare, Allocator>::
 reschedule_top(T t)
 {
@@ -582,7 +576,7 @@ reschedule_top(T t)
 template <std::size_t block_size, typename T, typename V, typename Compare, typename Allocator>
 template <typename U>
 inline
-rollbear::enable_if_t<std::is_same<U, void>::value>
+cpp14::enable_if_t<std::is_same<U, void>::value>
 prio_queue<block_size, T, V, Compare, Allocator>::
 reschedule_top(T t)
 {
