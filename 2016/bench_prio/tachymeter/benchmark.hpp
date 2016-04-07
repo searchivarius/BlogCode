@@ -39,7 +39,7 @@ public:
   benchmark(reporter &r_) : r(r_) { }
   void run(int argc, char *argv[], std::ostream &ostr = std::cout);
   template <typename Setup, typename Seq>
-  void measure(Seq &&seq, std::string name, typename C::duration min_time);
+  void measure(Seq &&seq, const std::string& name, typename C::duration min_time);
 private:
   class job
   {
@@ -102,7 +102,7 @@ bool benchmark<C>::job::matches(int argc, char *argv[]) const
 template <typename C>
 template <typename Setup, typename Seq>
 void benchmark<C>::measure(Seq &&seq,
-                           std::string name,
+                           const std::string& name,
                            typename C::duration min_time)
 {
   using job_type = job_t<Setup, cpp14::decay_t<Seq>>;

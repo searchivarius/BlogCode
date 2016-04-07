@@ -1,4 +1,8 @@
 /*
+ * This benchmark is built on top of:
+ */
+/*
+ *
  * B-heap priority queue
  *
  * Copyright Björn Fahller 2015
@@ -23,6 +27,7 @@
 #include <queue>
 #include <random>
 #include <chrono>
+#include <sstream>
 #include <algorithm>
 #include <iostream>
 
@@ -33,6 +38,13 @@ using namespace tachymeter;
 using Clock = std::chrono::high_resolution_clock;
 using rollbear::prio_queue;
 
+template <typename T>
+std::string toString(const T& val) {
+  std::stringstream ss;
+  ss << val;
+  return ss.str();
+}
+
 struct null_obj_t
 {
   constexpr operator int() const { return 0; }
@@ -41,10 +53,14 @@ struct null_obj_t
 };
 
 static const constexpr null_obj_t null_obj{ };
-static int n[600000];
-auto const test_sizes        = powers(seq(1, 2, 5), 1, 100000, 10);
+std::vector<int>       nvect;
+int*                   n;
+
+auto test_sizes        = powers(seq(1, 2, 5), 1, 100000, 10);
+//auto test_sizes        = powers(seq(1, 2, 5), 1, 1000000, 10);
+//auto test_sizes        = {1, 10, 100, 1000, 10000, 100000, 10000000, 100000000};
 //auto const min_test_duration = std::chrono::milliseconds(1000);
-auto const min_test_duration = std::chrono::milliseconds(20);
+auto const min_test_duration = std::chrono::milliseconds(1);
 
 template <typename T>
 struct is_pair
@@ -265,61 +281,61 @@ void measure_prio_queue(int argc, char *argv[])
   using std::to_string;
 
   benchmark.measure<populate<qint>>(test_sizes,
-                                    "populate prio_queue<int,void>",
+                                    "populate prio_queue" + toString(size)+"<int,void>",
                                     min_test_duration);
   benchmark.measure<pop_all<qint>>(test_sizes,
-                                   "pop all prio_queue<int,void>",
+                                   "pop all prio_queue" + toString(size)+"<int,void>",
                                    min_test_duration);
   benchmark.measure<operate<qint, 320, 200>>(test_sizes,
-                                           "operate prio_queue<int,void>",
+                                           "operate prio_queue" + toString(size)+"<int,void>",
                                            min_test_duration);
 
   benchmark.measure<populate<qintintp>>(test_sizes,
-                                        "populate prio_queue<<int,int>, void>",
+                                        "populate prio_queue" + toString(size)+"<<int,int>, void>",
                                         min_test_duration);
   benchmark.measure<pop_all<qintintp>>(test_sizes,
-                                       "pop all prio_queue<<int,int>, void>",
+                                       "pop all prio_queue" + toString(size)+"<<int,int>, void>",
                                        min_test_duration);
   benchmark.measure<operate<qintintp, 320, 200>>(test_sizes,
-                                               "operate prio_queue<<int,int>, void>",
+                                               "operate prio_queue" + toString(size)+"<<int,int>, void>",
                                                min_test_duration);
 
   benchmark.measure<populate<qintptrp>>(test_sizes,
-                                        "populate prio_queue<<int,ptr>, void>",
+                                        "populate prio_queue" + toString(size)+"<<int,ptr>, void>",
                                         min_test_duration);
   benchmark.measure<pop_all<qintptrp>>(test_sizes,
-                                       "pop all prio_queue<<int,ptr>, void>",
+                                       "pop all prio_queue" + toString(size)+"<<int,ptr>, void>",
                                        min_test_duration);
   benchmark.measure<operate<qintptrp, 320, 200>>(test_sizes,
-                                               "operate prio_queue<<int,ptr>, void>",
+                                               "operate prio_queue" + toString(size)+"<<int,ptr>, void>",
                                                min_test_duration);
 
 
   benchmark.measure<populate<qintint>>(test_sizes,
-                                       "populate prio_queue<int,int>",
+                                       "populate prio_queue" + toString(size)+"<int,int>",
                                        min_test_duration);
   benchmark.measure<pop_all<qintint>>(test_sizes,
-                                      "pop all prio_queue<int,int>",
+                                      "pop all prio_queue" + toString(size)+"<int,int>",
                                       min_test_duration);
   benchmark.measure<operate<qintint, 320, 200>>(test_sizes,
-                                              "operate prio_queue<int,int>",
+                                              "operate prio_queue" + toString(size)+"<int,int>",
                                               min_test_duration);
 
   benchmark.measure<reschedule<qintint, 1000>>(test_sizes,
-                                               "reschedule prio_queue<int,int>",
+                                               "reschedule prio_queue" + toString(size)+"<int,int>",
                                                min_test_duration);
   benchmark.measure<pop_push<qintint, 1000>>(test_sizes,
-                                             "reschedule with pop/push prio_queue<int,int>",
+                                             "reschedule with pop/push prio_queue" + toString(size)+"<int,int>",
                                              min_test_duration);
 
   benchmark.measure<populate<qintp>>(test_sizes,
-                                     "populate prio_queue<int,ptr>",
+                                     "populate prio_queue" + toString(size)+"<int,ptr>",
                                      min_test_duration);
   benchmark.measure<pop_all<qintp>>(test_sizes,
-                                    "pop all prio_queue<int,ptr>",
+                                    "pop all prio_queue" + toString(size)+"<int,ptr>",
                                     min_test_duration);
   benchmark.measure<operate<qintp, 320, 200>>(test_sizes,
-                                            "operate prio_queue<int,ptr>",
+                                            "operate prio_queue" + toString(size)+"<int,ptr>",
                                             min_test_duration);
   benchmark.run(argc, argv);
 }
@@ -347,7 +363,7 @@ void measure_falconn(int argc, char *argv[])
                                    "pop all falconn_mod2<int>",
                                    min_test_duration);
   benchmark.measure<operate<qint, 320, 200>>(test_sizes,
-                                           "operate priority_queue<int>",
+                                           "operate falconn_mod2<int>",
                                            min_test_duration);
 
   benchmark.measure<populate<qintintp>>(test_sizes,
@@ -423,50 +439,51 @@ void measure_std(int argc, char *argv[])
   benchmark.run(argc, argv);
 }
 
+template <std::size_t fanout, std::size_t heap_size>
 void measure_gheap(int argc, char *argv[])
 { 
 
-  using qint =     gpriority_queue<gheap<2,512>,int>;
-  using qintintp = gpriority_queue<gheap<2,512>,std::pair<int, int>>;
-  using qintptrp = gpriority_queue<gheap<2,512>,std::pair<int, int64_t>>; // Can't work with a unique_ptr (also problems if a pointer is used in this benchmark)
+  using qint =     gpriority_queue<gheap<fanout,heap_size>,int>;
+  using qintintp = gpriority_queue<gheap<fanout,heap_size>,std::pair<int, int>>;
+  using qintptrp = gpriority_queue<gheap<fanout,heap_size>,std::pair<int, int64_t>>; // Can't work with a unique_ptr (also problems if a pointer is used in this benchmark)
 
 
   CSV_reporter     reporter("/tmp/q/gheap", &std::cout);
   benchmark<Clock> benchmark(reporter);
 
   benchmark.measure<pop_push<qint, 1000>>(test_sizes,
-                                             "gpriority_queue pop/push",
+                                             "gpriority_queue" + toString(fanout)+","+toString(heap_size)+" pop/push",
                                              min_test_duration);
 
   benchmark.measure<populate<qint>>(test_sizes,
-                                    "populate gpriority_queue<int>",
+                                    "populate gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<int>",
                                     min_test_duration);
   benchmark.measure<pop_all<qint>>(test_sizes,
-                                   "pop all gpriority_queue<int>",
+                                   "pop all gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<int>",
                                    min_test_duration);
   benchmark.measure<operate<qint, 320, 200>>(test_sizes,
-                                           "operate gpriority_queue<int>",
+                                           "operate gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<int>",
                                            min_test_duration);
 
 
   benchmark.measure<populate<qintintp>>(test_sizes,
-                                    "populate gpriority_queue<<int,int>>",
+                                    "populate gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int>>",
                                     min_test_duration);
   benchmark.measure<pop_all<qintintp>>(test_sizes,
-                                   "pop all gpriority_queue<<int,int>>",
+                                   "pop all gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int>>",
                                    min_test_duration);
   benchmark.measure<operate<qintintp, 320, 200>>(test_sizes,
-                                           "operate gpriority_queue<<int,int>>",
+                                           "operate gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int>>",
                                            min_test_duration);
 
   benchmark.measure<populate<qintptrp>>(test_sizes,
-                                        "populate gpriority_queue<<int,int64>>",
+                                        "populate gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int64>>",
                                         min_test_duration);
   benchmark.measure<pop_all<qintptrp>>(test_sizes,
-                                       "pop all gpriority_queue<<int,int64>>",
+                                       "pop all gpriority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int64>>",
                                        min_test_duration);
   benchmark.measure<operate<qintptrp, 320, 200>>(test_sizes,
-                                               "operate priority_queue<<int,int64>>",
+                                               "operate priority_queue" + toString(fanout)+","+toString(heap_size)+"<<int,int64>>",
                                                min_test_duration);
 
   benchmark.run(argc, argv);
@@ -477,7 +494,12 @@ int main(int argc, char *argv[])
   std::random_device              rd;
   std::mt19937                    gen(rd());
   std::uniform_int_distribution<> dist(1, 10000000);
-  for (auto& i : n) i = dist(gen);
+
+  size_t maxQty = *std::max_element(test_sizes.begin(), test_sizes.end()); 
+  nvect.resize(maxQty + 1);
+
+  for (auto& i : nvect) i = dist(gen);
+  n = &nvect[0];
 
   std::cout << sizeof(int) << ' '
       << sizeof(std::pair<int, std::unique_ptr<int>>) << '\n';
@@ -486,10 +508,19 @@ int main(int argc, char *argv[])
   measure_prio_queue<8>(argc, argv);
   measure_prio_queue<16>(argc, argv);
   measure_prio_queue<32>(argc, argv);
-  measure_prio_queue<64>(argc, argv);
 #endif
+  measure_prio_queue<64>(argc, argv);
 
-  measure_gheap(argc, argv);
+  measure_gheap<2,1>(argc, argv);
+  measure_gheap<4,1>(argc, argv);
+  measure_gheap<8,1>(argc, argv);
+  measure_gheap<2,32>(argc, argv);
+  measure_gheap<4,32>(argc, argv);
+  measure_gheap<8,32>(argc, argv);
+  measure_gheap<2,1024>(argc, argv);
+  measure_gheap<4,1024>(argc, argv);
+  measure_gheap<8,1024>(argc, argv);
+
   measure_falconn(argc, argv);
   measure_std(argc, argv);
 }

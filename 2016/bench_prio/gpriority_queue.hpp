@@ -95,10 +95,6 @@ public:
     c.pop_back();
   }
 
-  void replace_top(const_reference& e) {
-    Heap::swap_max_item(c.begin(), c.end(), comp);
-  }
-
   void swap(gpriority_queue &q)
   {
     std::swap(c, q.c);
