@@ -38,7 +38,8 @@ struct null_obj_t
 static const constexpr null_obj_t null_obj{ };
 static int n[600000];
 auto const test_sizes        = powers(seq(1, 2, 5), 1, 100000, 10);
-auto const min_test_duration = std::chrono::milliseconds(1000);
+//auto const min_test_duration = std::chrono::milliseconds(1000);
+auto const min_test_duration = std::chrono::milliseconds(10);
 
 template <typename T>
 struct is_pair
@@ -304,11 +305,9 @@ int main(int argc, char *argv[])
   std::cout << sizeof(int) << ' '
       << sizeof(std::pair<int, std::unique_ptr<int>>) << '\n';
 
-#if 1
   measure_prio_queue<8>(argc, argv);
   measure_prio_queue<16>(argc, argv);
   measure_prio_queue<32>(argc, argv);
-#endif
   measure_prio_queue<64>(argc, argv);
 
 
