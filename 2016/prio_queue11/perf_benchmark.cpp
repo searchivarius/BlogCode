@@ -12,6 +12,11 @@
  */
 
 #include "prio_queue.hpp"
+#include "falconn_heap_mod.h"
+#include "gheap.hpp"
+#include "gpriority_queue.hpp"
+
+
 #include <tachymeter/benchmark.hpp>
 #include <tachymeter/seq.hpp>
 #include <tachymeter/CSV_reporter.hpp>
@@ -39,7 +44,7 @@ static const constexpr null_obj_t null_obj{ };
 static int n[600000];
 auto const test_sizes        = powers(seq(1, 2, 5), 1, 100000, 10);
 //auto const min_test_duration = std::chrono::milliseconds(1000);
-auto const min_test_duration = std::chrono::milliseconds(10);
+auto const min_test_duration = std::chrono::milliseconds(20);
 
 template <typename T>
 struct is_pair
@@ -208,6 +213,30 @@ private:
   Q q;
 };
 
+template <typename Q, uint64_t num_cycles>
+class replace_top
+{
+public:
+  replace_top(std::size_t size)
+  {
+    for (uint64_t i = 0; i != size; ++i)
+    {
+      add(q, n[i]);
+    }
+  }
+  void operator()(uint64_t size)
+  {
+    auto p                = n + size;
+    auto remaining_cycles = num_cycles;
+    while (remaining_cycles--)
+    {
+      q.replace_top(*p++);
+    }
+  }
+private:
+  Q q;
+};
+
 inline
 bool operator<(const std::pair<int, std::unique_ptr<int>> &lh,
                const std::pair<int, std::unique_ptr<int>> &rh)
@@ -295,21 +324,58 @@ void measure_prio_queue(int argc, char *argv[])
   benchmark.run(argc, argv);
 }
 
-int main(int argc, char *argv[])
+void measure_falconn(int argc, char *argv[])
 {
-  std::random_device              rd;
-  std::mt19937                    gen(rd());
-  std::uniform_int_distribution<> dist(1, 10000000);
-  for (auto& i : n) i = dist(gen);
+  using qint = FalconnHeapMod2<int>;
+  using qintintp = FalconnHeapMod1<int, int>;
+  using qintptrp = FalconnHeapMod1<int, int64_t>; // Can't work with a unique_ptr (also problems if a pointer is used in this benchmark)
 
-  std::cout << sizeof(int) << ' '
-      << sizeof(std::pair<int, std::unique_ptr<int>>) << '\n';
+  CSV_reporter     reporter("/tmp/q/falconn", &std::cout);
+  benchmark<Clock> benchmark(reporter);
 
-  measure_prio_queue<8>(argc, argv);
-  measure_prio_queue<16>(argc, argv);
-  measure_prio_queue<32>(argc, argv);
-  measure_prio_queue<64>(argc, argv);
+  benchmark.measure<pop_push<qint, 1000>>(test_sizes,
+                                           "falconn_mod2 pop/push",
+                                           min_test_duration);
+  benchmark.measure<replace_top<qint, 1000>>(test_sizes,
+                                           "falconn_mod2 replace_top",
+                                           min_test_duration);
 
+  benchmark.measure<populate<qint>>(test_sizes,
+                                    "populate falconn_mod2<int>",
+                                    min_test_duration);
+  benchmark.measure<pop_all<qint>>(test_sizes,
+                                   "pop all falconn_mod2<int>",
+                                   min_test_duration);
+  benchmark.measure<operate<qint, 320, 200>>(test_sizes,
+                                           "operate priority_queue<int>",
+                                           min_test_duration);
+
+  benchmark.measure<populate<qintintp>>(test_sizes,
+                                    "populate falconn_mod1<<int,int>>",
+                                    min_test_duration);
+  benchmark.measure<pop_all<qintintp>>(test_sizes,
+                                   "pop all falconn_mod1<<int,int>>",
+                                   min_test_duration);
+  benchmark.measure<operate<qintintp, 320, 200>>(test_sizes,
+                                           "operate falconn_mod1<<int,int>>",
+                                           min_test_duration);
+
+  benchmark.measure<populate<qintptrp>>(test_sizes,
+                                        "populate falconn_mod1<<int,int64>>",
+                                        min_test_duration);
+  benchmark.measure<pop_all<qintptrp>>(test_sizes,
+                                       "pop all falconn_mod1<<int,int64>>",
+                                       min_test_duration);
+  benchmark.measure<operate<qintptrp, 320, 200>>(test_sizes,
+                                               "operate falconn_mod1<<int,int64>>",
+                                               min_test_duration);
+
+
+  benchmark.run(argc, argv);
+}
+
+void measure_std(int argc, char *argv[])
+{ 
 
   using qint = std::priority_queue<int>;
   using qintintp = std::priority_queue<std::pair<int, int>>;
@@ -355,4 +421,75 @@ int main(int argc, char *argv[])
                                                min_test_duration);
 
   benchmark.run(argc, argv);
+}
+
+void measure_gheap(int argc, char *argv[])
+{ 
+
+  using qint =     gpriority_queue<gheap<2,512>,int>;
+  using qintintp = gpriority_queue<gheap<2,512>,std::pair<int, int>>;
+  using qintptrp = gpriority_queue<gheap<2,512>,std::pair<int, int64_t>>; // Can't work with a unique_ptr (also problems if a pointer is used in this benchmark)
+
+
+  CSV_reporter     reporter("/tmp/q/gheap", &std::cout);
+  benchmark<Clock> benchmark(reporter);
+
+  benchmark.measure<pop_push<qint, 1000>>(test_sizes,
+                                             "gpriority_queue pop/push",
+                                             min_test_duration);
+
+  benchmark.measure<populate<qint>>(test_sizes,
+                                    "populate gpriority_queue<int>",
+                                    min_test_duration);
+  benchmark.measure<pop_all<qint>>(test_sizes,
+                                   "pop all gpriority_queue<int>",
+                                   min_test_duration);
+  benchmark.measure<operate<qint, 320, 200>>(test_sizes,
+                                           "operate gpriority_queue<int>",
+                                           min_test_duration);
+
+
+  benchmark.measure<populate<qintintp>>(test_sizes,
+                                    "populate gpriority_queue<<int,int>>",
+                                    min_test_duration);
+  benchmark.measure<pop_all<qintintp>>(test_sizes,
+                                   "pop all gpriority_queue<<int,int>>",
+                                   min_test_duration);
+  benchmark.measure<operate<qintintp, 320, 200>>(test_sizes,
+                                           "operate gpriority_queue<<int,int>>",
+                                           min_test_duration);
+
+  benchmark.measure<populate<qintptrp>>(test_sizes,
+                                        "populate gpriority_queue<<int,int64>>",
+                                        min_test_duration);
+  benchmark.measure<pop_all<qintptrp>>(test_sizes,
+                                       "pop all gpriority_queue<<int,int64>>",
+                                       min_test_duration);
+  benchmark.measure<operate<qintptrp, 320, 200>>(test_sizes,
+                                               "operate priority_queue<<int,int64>>",
+                                               min_test_duration);
+
+  benchmark.run(argc, argv);
+}
+
+int main(int argc, char *argv[])
+{
+  std::random_device              rd;
+  std::mt19937                    gen(rd());
+  std::uniform_int_distribution<> dist(1, 10000000);
+  for (auto& i : n) i = dist(gen);
+
+  std::cout << sizeof(int) << ' '
+      << sizeof(std::pair<int, std::unique_ptr<int>>) << '\n';
+
+#if 0
+  measure_prio_queue<8>(argc, argv);
+  measure_prio_queue<16>(argc, argv);
+  measure_prio_queue<32>(argc, argv);
+  measure_prio_queue<64>(argc, argv);
+#endif
+
+  measure_gheap(argc, argv);
+  measure_falconn(argc, argv);
+  measure_std(argc, argv);
 }

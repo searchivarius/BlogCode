@@ -20,13 +20,13 @@
 
 #include <cpp14.hpp>
 
-//#ifdef __GNUC__
-//#define rollbear_prio_q_likely(x)       __builtin_expect(!!(x), 1)
-//#define rollbear_prio_q_unlikely(x)     __builtin_expect(!!(x), 0)
-//#else
+#ifdef __GNUC__
+#define rollbear_prio_q_likely(x)       __builtin_expect(!!(x), 1)
+#define rollbear_prio_q_unlikely(x)     __builtin_expect(!!(x), 0)
+#else
   #define rollbear_prio_q_likely(x) x
   #define rollbear_prio_q_unlikely(x) x
-//#endif
+#endif
 
 
 namespace rollbear

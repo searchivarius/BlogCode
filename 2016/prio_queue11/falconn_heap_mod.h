@@ -28,6 +28,7 @@ class FalconnHeapMod1 {
       return key < i2.key;
     }
   };
+  using value_type = DataType;
 
   const Item& top() const {
     return v_[0];
@@ -155,6 +156,8 @@ class FalconnHeapMod1 {
 template <typename Item>
 class FalconnHeapMod2 {
  public:
+  using value_type = Item;
+
   const Item& top() const {
     return v_[0];
   }
