@@ -28,8 +28,8 @@ inline float mm256_sum1(__m256 reg) {
 };
 
 inline float mm256_sum2(__m256 reg) {
-  __m128 sum = _mm256_extractf128_ps(reg, 0) + 
-               _mm256_extractf128_ps(reg, 1);
+  __m128 sum = _mm_add_ps(_mm256_extractf128_ps(reg, 0),
+                          _mm256_extractf128_ps(reg, 1));
   return mm128_sum1(sum);
 };
 
