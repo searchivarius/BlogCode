@@ -36,7 +36,7 @@ inline float mm128_sum3(__m128 regorig) {
 
 using namespace std;
 
-template <float (*sum_func)(__m128)> void do_test(unsigned N, unsigned repQty) {
+template <float (*sum_func)(__m128)> void do_test(const char* func_name, unsigned N, unsigned repQty) {
   WallClockTimer z;
   uint64_t totalElapsed = 0;
   // The first pass is just to check accuracy
@@ -46,7 +46,7 @@ template <float (*sum_func)(__m128)> void do_test(unsigned N, unsigned repQty) {
     __m128 inp = _mm_set_ps(a, b, c, d);
     float res = sum_func(inp); 
     if (fabs(res - expRes) > 0.0001) {
-      cerr << "Function: " << typeid(sum_func).name() << " Mismatch: " << res << " vs " << expRes << endl;
+      cerr << "Function: " << func_name << " Mismatch: " << res << " vs " << expRes << endl;
       abort();
     }
   }
@@ -61,12 +61,12 @@ template <float (*sum_func)(__m128)> void do_test(unsigned N, unsigned repQty) {
     }
     totalElapsed += z.split();
   }
-  cout << "Function: " << typeid(sum_func).name() << " Ignore: " << sum_total << "Total time: " << totalElapsed/1000.0 << " (ms) " << endl;
+  cout << "Function: " << func_name << "\tTotal time: " << totalElapsed/1000.0 << " (ms) " << " Ignore: " << sum_total << endl;
 };
 
 int main(int argc, char * argv[]) {
-  do_test<mm128_sum1>(1024*1024, 100);
-  do_test<mm128_sum2>(1024*1024, 100);
-  do_test<mm128_sum3>(1024*1024, 100);
+  do_test<mm128_sum1>("scalar                ", 1024*1024, 100);
+  do_test<mm128_sum2>("vector via _mm_hadd_ps", 1024*1024, 100);
+  do_test<mm128_sum3>("vector via shuffles   ", 1024*1024, 100);
   return 0;
 };

@@ -1,4 +1,4 @@
-CXXFLAGS=-std=c++11 -DHAVE_CXX0X -openmp   -march=native
+CXXFLAGS=-std=c++11 -DHAVE_CXX0X -openmp   -march=native -Ofast
 all: testsum128 testsum256
 clean: 
 	rm -f *.o testsum128 testsum256
