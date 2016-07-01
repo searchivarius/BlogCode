@@ -6,9 +6,10 @@ Tested using gcc 4.8.4 & Linux Ubuntu 14. CPUS is ``Intel(R) Core(TM) i7-4700MQ 
 Currently, performance numbers are (see code for details) for the 128-bit SSE registers:
 ```
 ./testsum128 
-Function: scalar                	Total time: 302.215 (ms)  Ignore: 7.03693e+13
-Function: vector via _mm_hadd_ps	Total time: 473.744 (ms)  Ignore: 7.03693e+13
-Function: vector via shuffles   	Total time: 577.859 (ms)  Ignore: 7.03693e+13
+Function: scalar                	Total time: 302.783 (ms)  Ignore: 7.03693e+13
+Function: vector via _mm_hadd_ps	Total time: 469.195 (ms)  Ignore: 7.03693e+13
+Function: vector via shuffles1  	Total time: 440.41 (ms)  Ignore: 7.03693e+13
+Function: vector via shuffles2  	Total time: 407.912 (ms)  Ignore: 7.03693e+13
 ```
 For 256-bit AVX registers:
 ```
