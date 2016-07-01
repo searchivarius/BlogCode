@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include <cstdio>
 #include "emmintrin.h"
+#include "immintrin.h"
 #include "../../2014/ztimer.h"
 
 #include <vector>
