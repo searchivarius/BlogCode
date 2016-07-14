@@ -88,7 +88,7 @@ void test_chunk(const vector<vector<float>>& data) {
     uint32_t* pi = (uint32_t*)pChunk; 
     pi[0] = i;
     pi[1] = vec_size; 
-    float*    pf = (float*)pChunk + 8;
+    float*    pf = reinterpret_cast<float*>(pChunk + 8);
   
     for (size_t k = 0; k < vec_size; ++k) {
       pf[k] = data[i][k];
@@ -98,14 +98,14 @@ void test_chunk(const vector<vector<float>>& data) {
   WallClockTimer z;
   uint64_t totalElapsed = 0;
   z.reset();
-  float *pQuery = (float*)pChunkStart + 8;
+  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
   float sum = 0;
   for (size_t i = 1; i < N; ++i) {
     char *pst = pChunkStart + i * elem_size; 
     const uint32_t* pi = (uint32_t*) pst;
     uint32_t id = pi[0];
     size_t   qty = pi[1];
-    const float* pData = (float*)pst + 8;
+    const float* pData = reinterpret_cast<float*>(pst + 8);
 
     float d = dist(pQuery, pData, qty);
 
@@ -147,7 +147,7 @@ void test_chunk_indirect1(const vector<vector<float>>& data) {
     vpData[i] = (Elem1*)pChunk;
     pi[0] = i;
     pi[1] = vec_size; 
-    float*    pf = (float*)pChunk + 8;
+    float*    pf = reinterpret_cast<float*>(pChunk + 8);
   
     for (size_t k = 0; k < vec_size; ++k) {
       pf[k] = data[i][k];
@@ -157,7 +157,7 @@ void test_chunk_indirect1(const vector<vector<float>>& data) {
   WallClockTimer z;
   uint64_t totalElapsed = 0;
   z.reset();
-  float *pQuery = (float*)pChunkStart + 8;
+  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
   float sum = 0;
   for (size_t i = 1; i < N; ++i) {
     const Elem1* pElem = vpData[i];
@@ -184,7 +184,7 @@ void test_origdata_indirect1(const vector<vector<float>>& data) {
     vpData[i] = (Elem1*)vExtData[i];
     pi[0] = i;
     pi[1] = vec_size; 
-    float*    pf = (float*)vExtData[i] + 8;
+    float*    pf = reinterpret_cast<float*>(vExtData[i] + 8);
   
     for (size_t k = 0; k < vec_size; ++k) {
       pf[k] = data[i][k];
@@ -193,7 +193,7 @@ void test_origdata_indirect1(const vector<vector<float>>& data) {
   WallClockTimer z;
   uint64_t totalElapsed = 0;
   z.reset();
-  float *pQuery = (float*)&vExtData[0] + 8;
+  float *pQuery = vpData[0]->pData;
   float sum = 0;
   for (size_t i = 1; i < N; ++i) {
     const Elem1* pElem = vpData[i];
@@ -203,7 +203,7 @@ void test_origdata_indirect1(const vector<vector<float>>& data) {
   }
   totalElapsed += z.split();
   cout << "Ignore: " << sum << endl;
-  cout << "Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  cout << "Test (origdata indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   for (size_t i = 0; i < N; ++i) {
     delete [] vExtData[i];
   }
@@ -254,7 +254,7 @@ void test_chunk_indirect2(const vector<vector<float>>& data) {
     uint32_t* pi = (uint32_t*)pChunk; 
     pi[0] = i;
     pi[1] = vec_size; 
-    float*    pf = (float*)pChunk + 8;
+    float*    pf = reinterpret_cast<float*>(pChunk + 8);
     vpData[i] = new Elem2(pi[0], pi[1], pf);
   
     for (size_t k = 0; k < vec_size; ++k) {
@@ -265,7 +265,7 @@ void test_chunk_indirect2(const vector<vector<float>>& data) {
   WallClockTimer z;
   uint64_t totalElapsed = 0;
   z.reset();
-  float *pQuery = (float*)pChunkStart + 8;
+  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
   float sum = 0;
   for (size_t i = 1; i < N; ++i) {
     const Elem2* pElem = vpData[i];
@@ -288,8 +288,8 @@ int main(int argc, char*argv[]) {
   gen_data(1024*1024*2, 128, data);
   test_chunk(data);
   test_chunk_indirect1(data);
-  test_origdata_indirect1(data);
   test_chunk_indirect2(data);
+  test_origdata_indirect1(data);
   test_origdata_indirect2(data);
   return 0;
 }
