@@ -3,6 +3,8 @@
 #include <vector>
 #include <random>
 
+#include <sys/mman.h>
+
 #include "../../2014/ztimer.h"
 
 using namespace std;
@@ -26,7 +28,8 @@ float dist(const float* pVect1, const float* pVect2, size_t qty) {
   __m128  sum = _mm_set1_ps(0);
 
   while (pVect1 < pEnd1) {
-    _mm_prefetch((char*)(pVect2 + 16), _MM_HINT_T0);
+    // PREFETCH IS BAD HERE!!!
+    //_mm_prefetch((char*)(pVect2 + 16), _MM_HINT_T0);
     v1 = _mm_loadu_ps(pVect1); pVect1 += 4;
     v2 = _mm_loadu_ps(pVect2); pVect2 += 4;
     diff = _mm_sub_ps(v1, v2);
@@ -77,12 +80,16 @@ void gen_data(size_t N, size_t vec_size, vector<vector<float>>& data) {
   cout << "Generated " << N << " vectors of the size " << vec_size << endl;
 }
 
-void test_chunk(const vector<vector<float>>& data) {
+void test_chunk(const vector<vector<float>>& data, bool huge_page) {
   const size_t N = data.size();
   const size_t vec_size = data[0].size();
   const size_t elem_size = 8 + 4 * vec_size;
 
-  char* const pChunkStart = new char [ N * elem_size  ] ;
+  size_t MemSize = N * elem_size;
+  char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
+                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                      : new char [ MemSize   ] ;
+  cout << "test_chunk huge_page=" << huge_page << endl;
   char* pChunk = pChunkStart;
   for (size_t i = 0; i < N; ++i) {
     uint32_t* pi = (uint32_t*)pChunk; 
@@ -95,25 +102,90 @@ void test_chunk(const vector<vector<float>>& data) {
     }
     pChunk += elem_size;
   }
-  WallClockTimer z;
-  uint64_t totalElapsed = 0;
-  z.reset();
-  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
-  float sum = 0;
-  for (size_t i = 1; i < N; ++i) {
-    char *pst = pChunkStart + i * elem_size; 
-    const uint32_t* pi = (uint32_t*) pst;
-    uint32_t id = pi[0];
-    size_t   qty = pi[1];
-    const float* pData = reinterpret_cast<float*>(pst + 8);
+  {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      char *pst = pChunkStart + i * elem_size; 
+      const uint32_t* pi = (uint32_t*) pst;
+      uint32_t id = pi[0];
+      size_t   qty = pi[1];
+      const float* pData = reinterpret_cast<float*>(pst + 8);
 
-    float d = dist(pQuery, pData, qty);
+      float d = dist(pQuery, pData, qty);
 
-    sum += d + qty + id;
+      sum += d + qty + id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "SEQUENTIAL Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
-  totalElapsed += z.split();
-  cout << "Ignore: " << sum << endl;
-  cout << "Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  {
+    linear_congruential_engine<unsigned, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      char *pst = pChunkStart + ir * elem_size; 
+      const uint32_t* pi = (uint32_t*) pst;
+      uint32_t id = pi[0];
+      size_t   qty = pi[1];
+      const float* pData = reinterpret_cast<float*>(pst + 8);
+
+      float d = dist(pQuery, pData, qty);
+
+      sum += d + qty + id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+  {
+    linear_congruential_engine<unsigned, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      if (i < N) _mm_prefetch(pChunkStart + irand[i+1]*elem_size, _MM_HINT_T0);
+      uint32_t ir = irand[i];
+      char *pst = pChunkStart + ir * elem_size; 
+      const uint32_t* pi = (uint32_t*) pst;
+      uint32_t id = pi[0];
+      size_t   qty = pi[1];
+      const float* pData = reinterpret_cast<float*>(pst + 8);
+
+      float d = dist(pQuery, pData, qty);
+
+      sum += d + qty + id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM WITH PREFETCH Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+
+  if (huge_page) {
+    munmap(pChunkStart, MemSize);
+  } else delete [] pChunkStart;
 };
 
 struct __attribute__((packed)) Elem1 {
@@ -134,12 +206,17 @@ struct __attribute__((packed)) Elem2 {
   }
 };
 
-void test_chunk_indirect1(const vector<vector<float>>& data) {
+void test_chunk_indirect1(const vector<vector<float>>& data, bool huge_page) {
   const size_t N = data.size();
   const size_t vec_size = data[0].size();
   const size_t elem_size = 8 + 4 * vec_size;
 
-  char* const pChunkStart = new char [ N * elem_size  ] ;
+  size_t MemSize = N * elem_size;
+  char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
+                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                      : new char [ MemSize   ] ;
+  cout << "test_chunk_indirect1 huge_page=" << huge_page << endl;
+
   char* pChunk = pChunkStart;
   vector<Elem1*>  vpData(N);
   for (size_t i = 0; i < N; ++i) {
@@ -154,20 +231,75 @@ void test_chunk_indirect1(const vector<vector<float>>& data) {
     }
     pChunk += elem_size;
   }
-  WallClockTimer z;
-  uint64_t totalElapsed = 0;
-  z.reset();
-  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
-  float sum = 0;
-  for (size_t i = 1; i < N; ++i) {
-    const Elem1* pElem = vpData[i];
-    float d = dist(pQuery, pElem->pData, pElem->qty);
-
-    sum += d + pElem->qty + pElem->id;
+  {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      const Elem1* pElem = vpData[i];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "SEQUENTIAL Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
-  totalElapsed += z.split();
-  cout << "Ignore: " << sum << endl;
-  cout << "Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      const Elem1* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      if (i < N) _mm_prefetch(vpData[irand[i+1]], _MM_HINT_T0);
+      uint32_t ir = irand[i];
+      const Elem1* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM WITH PREFETCH Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+
+  if (huge_page) {
+    munmap(pChunkStart, MemSize);
+  } else delete [] pChunkStart;
 };
 
 void test_origdata_indirect1(const vector<vector<float>>& data) {
@@ -190,20 +322,71 @@ void test_origdata_indirect1(const vector<vector<float>>& data) {
       pf[k] = data[i][k];
     }
   }
-  WallClockTimer z;
-  uint64_t totalElapsed = 0;
-  z.reset();
-  float *pQuery = vpData[0]->pData;
-  float sum = 0;
-  for (size_t i = 1; i < N; ++i) {
-    const Elem1* pElem = vpData[i];
-    float d = dist(pQuery, pElem->pData, pElem->qty);
+  {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = vpData[0]->pData;
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      const Elem1* pElem = vpData[i];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
 
-    sum += d + pElem->qty + pElem->id;
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "SEQUENTIAL Test (origdata indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
-  totalElapsed += z.split();
-  cout << "Ignore: " << sum << endl;
-  cout << "Test (origdata indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = vpData[0]->pData;
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      const Elem1* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM Test (origdata indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = vpData[0]->pData;
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      const Elem1* pElem = vpData[ir];
+      if (i < N) _mm_prefetch(vpData[irand[i+1]], _MM_HINT_T0);
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM WITH PREFETCH Test (origdata indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
   for (size_t i = 0; i < N; ++i) {
     delete [] vExtData[i];
   }
@@ -219,22 +402,79 @@ void test_origdata_indirect2(const vector<vector<float>>& data) {
     vpData[i] = new Elem2(i, vec_size, &data[i][0]);
   }
 
-  WallClockTimer z;
-  uint64_t totalElapsed = 0;
-  z.reset();
-  const float *pQuery = reinterpret_cast<const float*>(&data[0][0]);
-  float sum = 0;
-  for (size_t i = 1; i < N; ++i) {
-    const Elem2* pElem = vpData[i];
-    float d = dist(pQuery, pElem->pData, pElem->qty);
-
-    sum += d + pElem->qty + pElem->id;
+  {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    const float *pQuery = reinterpret_cast<const float*>(&data[0][0]);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      const Elem2* pElem = vpData[i];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "SEQUENTIAL Test (origdata indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
-  totalElapsed += z.split();
-  cout << "Ignore: " << sum << endl;
-  cout << "Test (origdata indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
 
-  for (size_t i = 1; i < N; ++i) {
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    const float *pQuery = reinterpret_cast<const float*>(&data[0][0]);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      const Elem2* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM Test (origdata indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    const float *pQuery = reinterpret_cast<const float*>(&data[0][0]);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      if (i < N) {
+        const Elem2* pElemNext = vpData[irand[i+1]];
+        _mm_prefetch(pElemNext, _MM_HINT_T0);
+        _mm_prefetch(pElemNext->pData, _MM_HINT_T0);
+      }
+      uint32_t ir = irand[i];
+      const Elem2* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+  
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM WITH PREFETCH Test (origdata indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+
+  for (size_t i = 0; i < N; ++i) {
     const Elem2* pElem = vpData[i];
     delete pElem;
   }
@@ -262,22 +502,77 @@ void test_chunk_indirect2(const vector<vector<float>>& data) {
     }
     pChunk += elem_size;
   }
-  WallClockTimer z;
-  uint64_t totalElapsed = 0;
-  z.reset();
-  float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
-  float sum = 0;
-  for (size_t i = 1; i < N; ++i) {
-    const Elem2* pElem = vpData[i];
-    float d = dist(pQuery, pElem->pData, pElem->qty);
+  {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      const Elem2* pElem = vpData[i];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
 
-    sum += d + pElem->qty + pElem->id;
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "SEQUENTIAL Test (chunk indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
-  totalElapsed += z.split();
-  cout << "Ignore: " << sum << endl;
-  cout << "Test (chunk indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
 
-  for (size_t i = 1; i < N; ++i) {
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      uint32_t ir = irand[i];
+      const Elem2* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM Test (chunk indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+  {
+    linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
+    uniform_int_distribution<> dis(0, N - 1);
+    vector<unsigned> irand(N);
+    for (size_t i = 0; i < N; ++i) {
+      irand[i] = dis(gen);
+    }
+
+    WallClockTimer z;
+    uint64_t totalElapsed = 0;
+    z.reset();
+    float *pQuery = reinterpret_cast<float*>(pChunkStart + 8);
+    float sum = 0;
+    for (size_t i = 0; i < N; ++i) {
+      if (i < N) {
+        const Elem2* pElemNext = vpData[irand[i+1]];
+        _mm_prefetch(pElemNext, _MM_HINT_T0);
+        _mm_prefetch(pElemNext->pData, _MM_HINT_T0);
+      }
+      uint32_t ir = irand[i];
+      const Elem2* pElem = vpData[ir];
+      float d = dist(pQuery, pElem->pData, pElem->qty);
+
+      sum += d + pElem->qty + pElem->id;
+    }
+    totalElapsed += z.split();
+    cout << "Ignore: " << sum << endl;
+    cout << "RANDOM WITH PREFETCH Test (chunk indirect2) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+  }
+
+  for (size_t i = 0; i < N; ++i) {
     const Elem2* pElem = vpData[i];
     delete pElem;
   }
@@ -286,8 +581,10 @@ void test_chunk_indirect2(const vector<vector<float>>& data) {
 int main(int argc, char*argv[]) {
   vector<vector<float>> data;
   gen_data(1024*1024*2, 128, data);
-  test_chunk(data);
-  test_chunk_indirect1(data);
+  test_chunk(data, false);
+  test_chunk(data, true);
+  test_chunk_indirect1(data, false);
+  test_chunk_indirect1(data, true);
   test_chunk_indirect2(data);
   test_origdata_indirect1(data);
   test_origdata_indirect2(data);
