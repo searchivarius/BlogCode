@@ -19,8 +19,9 @@ using namespace std;
 #endif
 
 #define NUM_RAND_GAP_JUMPS   100
-#define TOTAL_QTY 1024*1024
-#define CHUNK_SIZE 1024
+
+const size_t TOTAL_QTY  = 1024*1024;
+const size_t CHUNK_SIZE = 1024;
 
 // This function computes the squared L2, but only for vectors where the number of elements is a multiple of 16 
 float dist(const float* pVect1, const float* pVect2, size_t qty) {
@@ -274,13 +275,14 @@ void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
   const size_t vec_size = data[0].size();
   const size_t elem_size = 8 + 4 * vec_size;
 
-  if (N % CHUNK_SIZE) {
+  if (N % CHUNK_SIZE || N < CHUNK_SIZE) {
     cerr << "The number of vector elements must be a multiple of " << CHUNK_SIZE << endl;
     abort();
   }
 
   size_t MemChunkSize = CHUNK_SIZE * elem_size;
-  size_t chunk_qty = N / CHUNK_SIZE;
+  size_t chunk_qty = (N / CHUNK_SIZE);
+
   vector<char *> vpChunks(chunk_qty);
   for (size_t i = 0; i < chunk_qty; ++i) {
     vpChunks[i] = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemChunkSize, PROT_READ | PROT_WRITE,
@@ -306,7 +308,7 @@ void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
   {
     cout << "\t\t====================================" << endl;
     cout << "\t\tTEST MULTIPLE CHUNKS INDIRECT ONE-LEVEL\tmode=" << get_walk_mode_name(walk_mode) << "\thuge_page=" << huge_page << endl;
-    cout << "\t\tN=" << N << "\t vec_size=" << vec_size << endl;
+    cout << "\t\tN=" << N << "\t# of chunks=" << chunk_qty << "\t vec_size=" << vec_size << endl;
     vector<unsigned> walk_data(N);
     get_walk_data(walk_data, walk_mode);
 
@@ -503,7 +505,7 @@ void test_sepalloc_indirect2(const vector<vector<float>>& data, eWalkMode walk_m
 };
 
 int main(int argc, char*argv[]) {
-  for (size_t  vec_size=16; vec_size <= 1024; vec_size *=4) {
+  for (size_t  vec_size=16; vec_size <= 1024; vec_size *=2) {
     cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
     cout << "@@@ START vector size=" << vec_size << endl;
     cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
