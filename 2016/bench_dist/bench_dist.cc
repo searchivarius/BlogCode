@@ -89,7 +89,6 @@ void test_chunk(const vector<vector<float>>& data, bool huge_page) {
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
                                         MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
                                       : new char [ MemSize   ] ;
-  cout << "test_chunk huge_page=" << huge_page << endl;
   char* pChunk = pChunkStart;
   for (size_t i = 0; i < N; ++i) {
     uint32_t* pi = (uint32_t*)pChunk; 
@@ -121,7 +120,7 @@ void test_chunk(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "SEQUENTIAL Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "SEQUENTIAL Test (chunk) huge_page=" << huge_page << " N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
   {
     linear_congruential_engine<unsigned, 48271, 0, 2147483647> gen;
@@ -150,7 +149,7 @@ void test_chunk(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "RANDOM Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "RANDOM Test (chunk) huge_page=" << huge_page << " N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
   {
     linear_congruential_engine<unsigned, 48271, 0, 2147483647> gen;
@@ -180,7 +179,7 @@ void test_chunk(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "RANDOM WITH PREFETCH Test (chunk) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "RANDOM WITH PREFETCH Test (chunk) huge_page=" << huge_page << " N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
 
   if (huge_page) {
@@ -215,7 +214,6 @@ void test_chunk_indirect1(const vector<vector<float>>& data, bool huge_page) {
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
                                         MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
                                       : new char [ MemSize   ] ;
-  cout << "test_chunk_indirect1 huge_page=" << huge_page << endl;
 
   char* pChunk = pChunkStart;
   vector<Elem1*>  vpData(N);
@@ -245,7 +243,7 @@ void test_chunk_indirect1(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "SEQUENTIAL Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "SEQUENTIAL Test huge_page=" << huge_page << " (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
   {
     linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
@@ -269,7 +267,7 @@ void test_chunk_indirect1(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "RANDOM Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "RANDOM Test (chunk indirect1) huge_page=" << huge_page << " N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
   {
     linear_congruential_engine<unsigned int, 48271, 0, 2147483647> gen;
@@ -294,7 +292,7 @@ void test_chunk_indirect1(const vector<vector<float>>& data, bool huge_page) {
     }
     totalElapsed += z.split();
     cout << "Ignore: " << sum << endl;
-    cout << "RANDOM WITH PREFETCH Test (chunk indirect1) N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
+    cout << "RANDOM WITH PREFETCH Test (chunk indirect1) huge_page=" << huge_page << " N=" << N << " vec_size=" << vec_size << " elapsed: " << float(totalElapsed)/1000.0 << " ms" << endl;
   }
 
   if (huge_page) {
@@ -580,7 +578,7 @@ void test_chunk_indirect2(const vector<vector<float>>& data) {
 
 int main(int argc, char*argv[]) {
   vector<vector<float>> data;
-  gen_data(1024*1024*2, 128, data);
+  gen_data(1024*1024*4, 128, data);
   test_chunk(data, false);
   test_chunk(data, true);
   test_chunk_indirect1(data, false);
