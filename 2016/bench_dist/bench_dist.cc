@@ -21,7 +21,6 @@ using namespace std;
 #define NUM_RAND_GAP_JUMPS   100
 
 const size_t TOTAL_QTY  = 1024*1024;
-const size_t CHUNK_SIZE = 1024;
 
 // This function computes the squared L2, but only for vectors where the number of elements is a multiple of 16 
 float dist(const float* pVect1, const float* pVect2, size_t qty) {
@@ -270,18 +269,18 @@ void test_onechunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
   } else delete [] pChunkStart;
 };
 
-void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, eWalkMode walk_mode) {
+void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, eWalkMode walk_mode, size_t chunk_size) {
   const size_t N = data.size();
   const size_t vec_size = data[0].size();
   const size_t elem_size = 8 + 4 * vec_size;
 
-  if (N % CHUNK_SIZE || N < CHUNK_SIZE) {
-    cerr << "The number of vector elements must be a multiple of " << CHUNK_SIZE << endl;
+  if (N % chunk_size || N < chunk_size) {
+    cerr << "The number of vector elements must be a multiple of " << chunk_size << endl;
     abort();
   }
 
-  size_t MemChunkSize = CHUNK_SIZE * elem_size;
-  size_t chunk_qty = (N / CHUNK_SIZE);
+  size_t MemChunkSize = chunk_size * elem_size;
+  size_t chunk_qty = (N / chunk_size);
 
   vector<char *> vpChunks(chunk_qty);
   for (size_t i = 0; i < chunk_qty; ++i) {
@@ -292,8 +291,8 @@ void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
 
   vector<Elem1*>  vpData(N);
   for (size_t i = 0; i < N; ++i) {
-    size_t chunkId = i / CHUNK_SIZE;
-    size_t inChunkId = i % CHUNK_SIZE;
+    size_t chunkId = i / chunk_size;
+    size_t inChunkId = i % chunk_size;
     char* p = vpChunks[chunkId] + inChunkId * elem_size;
     uint32_t* pi = (uint32_t*)p; 
     vpData[i] = (Elem1*)p;
@@ -505,37 +504,40 @@ void test_sepalloc_indirect2(const vector<vector<float>>& data, eWalkMode walk_m
 };
 
 int main(int argc, char*argv[]) {
-  for (size_t  vec_size=16; vec_size <= 1024; vec_size *=2) {
-    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-    cout << "@@@ START vector size=" << vec_size << endl;
-    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-    vector<vector<float>> data;
-    gen_data(TOTAL_QTY, vec_size, data);
+    for (size_t  vec_size=16; vec_size <= 128; vec_size *=2) {
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      cout << "@@@ START vector size=" << vec_size << endl;
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      vector<vector<float>> data;
+      gen_data(TOTAL_QTY, vec_size, data);
 
-    for (int iwalk_mode = 0; iwalk_mode != kMaxWalkMode; ++iwalk_mode) {
-      eWalkMode walk_mode = static_cast<eWalkMode>(iwalk_mode);
-      cout << "\t*******************************************************" << endl;
-      cout << "\t*** START " << get_walk_mode_name(walk_mode) << endl;
-      cout << "\t*******************************************************" << endl;
+      for (int iwalk_mode = 0; iwalk_mode != kMaxWalkMode; ++iwalk_mode) {
+        eWalkMode walk_mode = static_cast<eWalkMode>(iwalk_mode);
+        cout << "\t*******************************************************" << endl;
+        cout << "\t*** START " << get_walk_mode_name(walk_mode) << endl;
+        cout << "\t*******************************************************" << endl;
 
-      // We will test huge pages only in the case of the gapped or random gap access
-      for (int huge_page = 0; huge_page < (walk_mode == kRandomGap || walk_mode == kRandom ? 2 : 1); ++huge_page) {
-        test_onechunk(data, huge_page, walk_mode);
-        test_onechunk_indirect1(data, huge_page, walk_mode);
-        test_mulchunk_indirect1(data, huge_page, walk_mode);
-        test_onechunk_indirect2(data, huge_page,  walk_mode);
+        // We will test huge pages only in the case of the gapped or random gap access
+        for (int huge_page = 0; huge_page < (walk_mode == kRandomGap || walk_mode == kRandom ? 2 : 1); ++huge_page) {
+          test_onechunk(data, huge_page, walk_mode);
+          test_onechunk_indirect1(data, huge_page, walk_mode);
+          for (size_t chunk_size = 1024; chunk_size <= 1024*512; chunk_size *= 8)
+            test_mulchunk_indirect1(data, huge_page, walk_mode, chunk_size);
+          test_onechunk_indirect2(data, huge_page,  walk_mode);
+        }
+
+        test_sepalloc_indirect1(data, walk_mode);
+        test_sepalloc_indirect2(data, walk_mode);
+
+        cout << "\t*******************************************************" << endl;
+        cout << "\t*** END " << get_walk_mode_name(walk_mode) << endl;
+        cout << "\t*******************************************************" << endl;
+        cout << endl;
       }
-
-      test_sepalloc_indirect1(data, walk_mode);
-      test_sepalloc_indirect2(data, walk_mode);
-
-      cout << "\t*******************************************************" << endl;
-      cout << "\t*** END " << get_walk_mode_name(walk_mode) << endl;
-      cout << "\t*******************************************************" << endl;
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      cout << "@@@ END vector size=" << vec_size << endl;
+      cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+      cout << endl;
     }
-    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-    cout << "@@@ END vector size=" << vec_size << endl;
-    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-  }
   return 0;
 }
