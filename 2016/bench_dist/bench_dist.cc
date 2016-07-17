@@ -140,9 +140,9 @@ void test_onechunk(const vector<vector<float>>& data, bool huge_page, eWalkMode 
 
   size_t MemSize = N * elem_size;
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
-                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                        MAP_PRIVATE| MAP_ANONYMOUS , -1, 0))
                                       : new char [ MemSize   ] ;
-  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE);
+  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE );
 
   char* pChunk = pChunkStart;
   for (size_t i = 0; i < N; ++i) {
@@ -220,9 +220,9 @@ void test_onechunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
 
   size_t MemSize = N * elem_size;
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
-                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                        MAP_PRIVATE| MAP_ANONYMOUS , -1, 0))
                                       : new char [ MemSize   ] ;
-  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE);
+  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE );
 
   char* pChunk = pChunkStart;
   vector<Elem1*>  vpData(N);
@@ -287,9 +287,9 @@ void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
   vector<char *> vpChunks(chunk_qty);
   for (size_t i = 0; i < chunk_qty; ++i) {
     vpChunks[i] = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemChunkSize, PROT_READ | PROT_WRITE,
-                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                        MAP_PRIVATE| MAP_ANONYMOUS , -1, 0))
                                       : new char [ MemChunkSize ] ;
-    if (huge_page) madvise(vpChunks[i], MemChunkSize, MADV_HUGEPAGE);
+    if (huge_page) madvise(vpChunks[i], MemChunkSize, MADV_HUGEPAGE );
   }
 
   vector<Elem1*>  vpData(N);
@@ -350,8 +350,9 @@ void test_onechunk_indirect2(const vector<vector<float>>& data, bool huge_page, 
 
   size_t MemSize = N * elem_size;
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
-                                        MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
+                                        MAP_PRIVATE| MAP_ANONYMOUS , -1, 0))
                                       : new char [ MemSize   ] ;
+  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE );
 
   char* pChunk = pChunkStart;
   vector<Elem2*>  vpData(N);
@@ -522,11 +523,14 @@ int main(int argc, char*argv[]) {
 
         // We will test huge pages only in the case of the gapped or random gap access
         for (int huge_page = 0; huge_page < (walk_mode == kRandomGap || walk_mode == kRandom ? 2 : 1); ++huge_page) {
+          cout << "\t\t----------------------------------------------" << endl;
           test_onechunk(data, huge_page, walk_mode);
           test_onechunk_indirect1(data, huge_page, walk_mode);
+          test_onechunk_indirect2(data, huge_page,  walk_mode);
+          cout << "\t\t----------------------------------------------" << endl;
           for (size_t chunk_size = 1024; chunk_size <= 1024*512; chunk_size *= 8)
             test_mulchunk_indirect1(data, huge_page, walk_mode, chunk_size);
-          test_onechunk_indirect2(data, huge_page,  walk_mode);
+          cout << "\t\t----------------------------------------------" << endl;
         }
 
         test_sepalloc_indirect1(data, walk_mode);
