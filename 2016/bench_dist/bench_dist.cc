@@ -142,6 +142,7 @@ void test_onechunk(const vector<vector<float>>& data, bool huge_page, eWalkMode 
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
                                         MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
                                       : new char [ MemSize   ] ;
+  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE);
 
   char* pChunk = pChunkStart;
   for (size_t i = 0; i < N; ++i) {
@@ -221,6 +222,7 @@ void test_onechunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
   char* const pChunkStart = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemSize, PROT_READ | PROT_WRITE,
                                         MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
                                       : new char [ MemSize   ] ;
+  if (huge_page) madvise(pChunkStart, MemSize, MADV_HUGEPAGE);
 
   char* pChunk = pChunkStart;
   vector<Elem1*>  vpData(N);
@@ -287,6 +289,7 @@ void test_mulchunk_indirect1(const vector<vector<float>>& data, bool huge_page, 
     vpChunks[i] = huge_page ? reinterpret_cast<char *>(mmap(NULL, MemChunkSize, PROT_READ | PROT_WRITE,
                                         MAP_PRIVATE| MAP_ANONYMOUS, -1, 0))
                                       : new char [ MemChunkSize ] ;
+    if (huge_page) madvise(vpChunks[i], MemChunkSize, MADV_HUGEPAGE);
   }
 
   vector<Elem1*>  vpData(N);
