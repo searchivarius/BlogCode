@@ -1,1 +1,1 @@
-This code demonstrates that checks for NaNs and infinity are disabled by GCC when compiling with ``-ffast-math``
+This code demonstrates that checks for NaNs and infinity are disabled by GCC when compiling with ``-ffast-math`` You need a relatively new version of GCC that supports C++11. Just type make and run two binaries produced from the same source file, but compiled with and without ``-ffast-math``.
