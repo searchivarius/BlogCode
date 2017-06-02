@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <limits>
 
-#include "my_isnan_inf.h"
+#include "my_isnan_isinf.h"
 
 using namespace std;
 
