@@ -1,5 +1,5 @@
-#ifndef MY_ISNAN_H
-#define MY_ISNAN_H
+#ifndef MY_ISNAN_ISINF_H
+#define MY_ISNAN_ISINF_H
 #include <cstdint>
 
 /*
