@@ -1,1 +1,1 @@
-Custom functions checking for NaNs and INFs that work even with flags ``-Ofast`` and ``-Offast-math``. See [http://searchivarius.org/blog/gcc-disables-isnan-and-isinf-when-compiling-ffast-math-flag](a short note here).
+Custom functions checking for NaNs and INFs that work even with flags ``-Ofast`` and ``-Offast-math``. Also see [a short note here](http://searchivarius.org/blog/gcc-disables-isnan-and-isinf-when-compiling-ffast-math-flag).
