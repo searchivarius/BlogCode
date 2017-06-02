@@ -79,7 +79,7 @@ void test_double() {
 
   cout << "Exhaustively testing a huge range of double values" << endl;
   for (unsigned k = 0; k < 2; ++k)
-  for (size_t i = 0; i <= numeric_limits<uint32_t>::max(); ++i) {
+  for (size_t i = 0; i <= 2ul*uint64_t(numeric_limits<uint32_t>::max()); ++i) {
     t.u[k] = static_cast<unsigned>(i);
     t.u[1-k] = 0;
     if (isnan(t.f) != my_isnan(t.f)) {
