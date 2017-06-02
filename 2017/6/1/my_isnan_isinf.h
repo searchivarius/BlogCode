@@ -29,21 +29,15 @@ const unsigned FLOAT_EXP_MASK = 0x7F800000;
 const unsigned FLOAT_FRAC_PART_MASK = 0x7FFFFF;
 
 inline bool my_isnan(float x) {
-  union {
-    uint32_t u;
-    float    f;
-  } conv;
-  conv.f = x;
-  return ((conv.u & FLOAT_EXP_MASK) == FLOAT_EXP_MASK) && ((conv.u & FLOAT_FRAC_PART_MASK) != 0);
+  const uint32_t* p = reinterpret_cast<uint32_t*>(&x);
+  uint32_t        u = *p;
+  return ((u & FLOAT_EXP_MASK) == FLOAT_EXP_MASK) && ((u & FLOAT_FRAC_PART_MASK) != 0);
 };
 
 inline bool my_isinf(float x) {
-  union {
-    uint32_t u;
-    float    f;
-  } conv;
-  conv.f = x;
-  return ((conv.u & FLOAT_EXP_MASK) == FLOAT_EXP_MASK) && ((conv.u & FLOAT_FRAC_PART_MASK) == 0);
+  const uint32_t* p = reinterpret_cast<uint32_t*>(&x);
+  uint32_t        u = *p;
+  return ((u & FLOAT_EXP_MASK) == FLOAT_EXP_MASK) && ((u & FLOAT_FRAC_PART_MASK) == 0);
 };
 
 // 0111 1111 1111 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
@@ -52,22 +46,16 @@ const uint64_t DOUBLE_EXP_MASK = 0x7FF0000000000000ul;
 const uint64_t DOUBLE_FRAC_PART_MASK = 0x000FFFFFFFFFFFFFul;
 
 inline bool my_isnan(double x) {
-  union {
-    uint64_t  u;
-    double    f;
-  } conv;
-  conv.f = x;
-  return ((conv.u & DOUBLE_EXP_MASK) == DOUBLE_EXP_MASK) && ((conv.u & DOUBLE_FRAC_PART_MASK) != 0);
+  const uint64_t* p = reinterpret_cast<uint64_t*>(&x);
+  uint64_t        u = *p;
+  return ((u & DOUBLE_EXP_MASK) == DOUBLE_EXP_MASK) && ((u & DOUBLE_FRAC_PART_MASK) != 0);
 };
 
 
 inline bool my_isinf(double x) {
-  union {
-    uint64_t  u;
-    double    f;
-  } conv;
-  conv.f = x;
-  return ((conv.u & DOUBLE_EXP_MASK) == DOUBLE_EXP_MASK) && ((conv.u & DOUBLE_FRAC_PART_MASK) == 0);
+  const uint64_t* p = reinterpret_cast<uint64_t*>(&x);
+  uint64_t        u = *p;
+  return ((u & DOUBLE_EXP_MASK) == DOUBLE_EXP_MASK) && ((u & DOUBLE_FRAC_PART_MASK) == 0);
 };
 
 #endif
