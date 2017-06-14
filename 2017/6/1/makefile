@@ -1,3 +1,4 @@
+CXXFLAGS=-fstrict-aliasing -Wall -Wstrict-aliasing=2
 all: regular fast_math 
 regular: test_nan_inf.cpp makefile my_isnan_isinf.h
 	g++ test_nan_inf.cpp -std=c++11 -O3 -DEXHAUSTIVE_TESTS -o regular
