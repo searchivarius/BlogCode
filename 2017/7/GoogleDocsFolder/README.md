@@ -1,6 +1,6 @@
 This is a Google Docs script that would allow you to show the folder containing the current document. This is a fixed version of the following script https://webapps.stackexchange.com/a/51115
 
-Setup instruction (copied from the text in the above link): 
+Setup instruction (mostly copied from the text in the above link): 
 
 Select Tools > Script editor...
 
