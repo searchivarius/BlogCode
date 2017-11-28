@@ -18,17 +18,37 @@ import cv2
 mnist = fetch_mldata('MNIST original')
 
 print("Total # of data points %d" % (len(mnist.data)))
- 
+
+def transf(arr, D = 2, dim=28):
+  #return arr
+  l = len(arr)
+  res = []
+  for r in range(0, dim - D , D):
+    for c in range(0, dim - D , D):
+      m=0
+      for v in range(0, 2*D):
+        start = (r + v) * dim + c 
+        end = start + 2*D
+        m = max(m, np.mean(arr[start:end]))
+      res.append(m/D)
+
+  res = np.array(res)
+  #print(l,len(res))
+  #print(res)
+  #sys.exit(0)
+  return res
+
+
 # take the MNIST data and construct the training and testing split, using 75% of the
 # data for training and 25% for testing
-(trainData0, testData, trainLabels0, testLabels) = train_test_split(np.array(mnist.data),
+(trainData0, testData0, trainLabels0, testLabels) = train_test_split(np.array(mnist.data),
 	mnist.target, test_size=0.03, random_state=42)
  
 # now, let's take 10% of the training data and use that for validation
-(trainData0, valData, trainLabels0, valLabels) = train_test_split(trainData0, trainLabels0,
+(trainData0, valData0, trainLabels0, valLabels) = train_test_split(trainData0, trainLabels0,
 	test_size=0.03, random_state=84)
 
-TRAIN_QTY = 200
+TRAIN_QTY = 100
 uniqLabs = set(trainLabels0)
 qtys = dict( (k, 0) for k in uniqLabs)
 
@@ -40,7 +60,7 @@ for i in range(0, len(trainLabels0)):
   lab = trainLabels0[i]
   if qtys[lab] < TRAIN_QTY:
     qtys[lab] = qtys[lab] + 1
-    trainData.append(trainData0[i])
+    trainData.append(transf(trainData0[i]))
     trainLabels.append(trainLabels0[i])
     totQty = totQty + 1
     if totQty >= TRAIN_QTY * len(uniqLabs):
@@ -48,6 +68,9 @@ for i in range(0, len(trainLabels0)):
 
 trainData = np.array(trainData)
 trainLabels = np.array(trainLabels)
+
+testData = np.array( [transf(v) for v in testData0] )
+valData = np.array( [transf(v) for v in valData0] )
 
 print("# of training samples used %d" % (len(trainData)))
 
