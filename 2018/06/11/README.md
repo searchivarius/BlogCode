@@ -1,5 +1,5 @@
 Just run the script ``demo.sh``. It will execute three pipes that will:
-1. cat a sufficiently long pipe
+1. create and cat a sufficiently long file
 2. feed this output into ``head -10000``
 3. count the number of lines using ``wc -l``
 
