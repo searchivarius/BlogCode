@@ -7,4 +7,4 @@ membench: membench.cpp makefile
 clean: 
 	rm -f *.o membench 
 membench: membench.o
-	$(CXX) -o $@ membench.o
+	$(CXX) -o $@ membench.o -pthread
