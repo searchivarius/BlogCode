@@ -207,8 +207,7 @@ void scan(const size_t vecSize,
   cout << "Ignore sum: " << sum << endl;
 }
 
-#if 0
-void scanMultiThread(const size_t vecSize,
+void scanMultiThreadMix(const size_t vecSize,
                      const vector<float>& queries,
                      const vector<float>& data,
                      const vector<size_t>& dataLoc) {
@@ -236,8 +235,8 @@ void scanMultiThread(const size_t vecSize,
 
   cout << "Ignore sum: " << sum << endl;
 }
-#else
-void scanMultiThread(const size_t vecSize,
+
+void scanMultiThreadSplit(const size_t vecSize,
                      const vector<float>& queries,
                      const vector<float>& data,
                      const vector<size_t>& dataLoc, 
@@ -287,7 +286,6 @@ void scanMultiThread(const size_t vecSize,
 
   cout << "Ignore sum: " << sum << endl;
 }
-#endif
 
 template <typename F>
 void bench(F f, const string& testName) {
@@ -325,14 +323,24 @@ int main(int argc, char* argv[]) {
   cout << "# of data locations for sequential access: " << dataLocSorted.size() << endl;
 
   bench([&](){
-          scanMultiThread(vecSize, queries, data, dataLocSorted, usePrefetch);
+          scanMultiThreadSplit(vecSize, queries, data, dataLocSorted, usePrefetch);
         },
-        "sorted multi-threaded scan");
+        "sorted split multi-threaded scan");
 
   bench([&](){
-          scanMultiThread(vecSize, queries, data, dataLoc, usePrefetch);
+          scanMultiThreadSplit(vecSize, queries, data, dataLoc, usePrefetch);
         },
-        "unsorted multi-threaded scan");
+        "unsorted split multi-threaded scan");
+
+  bench([&](){
+          scanMultiThreadMix(vecSize, queries, data, dataLocSorted);
+        },
+        "sorted mix multi-threaded scan");
+
+  bench([&](){
+          scanMultiThreadMix(vecSize, queries, data, dataLoc);
+        },
+        "unsorted mix multi-threaded scan");
 
   bench([&](){
           scan(vecSize, queries, data, dataLocSorted, usePrefetch);
