@@ -15,7 +15,6 @@ using namespace std;
 
 #define MANUAL_VECTORIZE
 
-const bool usePrefetch = false;
 const float  scanFrac = 0.01;
 const size_t dataQty = 1000000; // 4 * vecSize * dataQty must be >> than the L3 cache size
 const size_t queryQty = 10000;
@@ -241,7 +240,8 @@ void scanMultiThread(const size_t vecSize,
 void scanMultiThread(const size_t vecSize,
                      const vector<float>& queries,
                      const vector<float>& data,
-                     const vector<size_t>& dataLoc) {
+                     const vector<size_t>& dataLoc, 
+                     bool usePrefetch) {
   std::atomic<size_t>  sum(0);
 
   size_t queryQty = queries.size() / vecSize;
@@ -264,9 +264,20 @@ void scanMultiThread(const size_t vecSize,
                 [&](size_t , size_t threadId) {
       size_t start = threadId * chunkSize; 
       size_t end = min(chunkSize + threadId * chunkSize, dataLoc.size()); 
+      if (threadId + 1 == numThreads) {
+        end = dataLoc.size();
+      }
 
-      for (size_t k = start; k < end; ++k) {
+      if (start == end) {
+        return;
+      }
+
+      for (size_t k = start; k < end - 1; ++k) {
         const float *pData = pDataBeg + dataLoc[k] * vecSize;
+        if (usePrefetch) {
+          const float *pDataNext = pDataBeg + dataLoc[k+1] * vecSize;
+          _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
+        }
         sum.fetch_add(k + dotProd(pQuery, pData, vecSize));
       }
       
@@ -291,12 +302,14 @@ int main(int argc, char* argv[]) {
   vector<size_t> dataLoc; 
   vector<size_t> dataLocSorted; 
 
-  if (argc != 2) {
-    cout << "Usage: " << argv[0] << " <vector size, e.g., 32> " << endl;
+  if (argc != 3) {
+    cout << "Usage: " << argv[0] << " <vector size, e.g., 32> <use prefetch>" << endl;
     return 1;
   }
   size_t vecSize = atoi(argv[1]);
+  bool usePrefetch = atoi(argv[2]) != 0;
   cout << "Vector size: " << vecSize << endl;
+  cout << "Use prefetch: " << usePrefetch <<  endl;
 
   size_t scanQty = (size_t) (scanFrac * dataQty);
 
@@ -312,12 +325,12 @@ int main(int argc, char* argv[]) {
   cout << "# of data locations for sequential access: " << dataLocSorted.size() << endl;
 
   bench([&](){
-          scanMultiThread(vecSize, queries, data, dataLocSorted);
+          scanMultiThread(vecSize, queries, data, dataLocSorted, usePrefetch);
         },
         "sorted multi-threaded scan");
 
   bench([&](){
-          scanMultiThread(vecSize, queries, data, dataLoc);
+          scanMultiThread(vecSize, queries, data, dataLoc, usePrefetch);
         },
         "unsorted multi-threaded scan");
 
