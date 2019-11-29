@@ -288,10 +288,11 @@ void scanMultiThreadSplit(const size_t vecSize,
 }
 
 template <typename F>
-void bench(F f, const string& testName) {
+void bench(F f, const string& testName, float dataToRead) {
   WallClockTimer t;
   f();
-  cout << "Test: " << testName << " time: " << t.split() / 1000000.0 << " sec" << endl;
+  float timeSec = t.split() / 1000000.0;
+  cout << "Test: " << testName << " time: " <<  timeSec << " sec Estimated throughput (GB/sec): " << ((float(dataToRead)/1e9)/timeSec)<< endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -322,35 +323,37 @@ int main(int argc, char* argv[]) {
   cout << "# of data locations for random access: " << dataLoc.size() << endl;
   cout << "# of data locations for sequential access: " << dataLocSorted.size() << endl;
 
+  float dataToRead = sizeof(float) * dataLocSorted.size() * vecSize * queryQty;
+
   bench([&](){
           scanMultiThreadSplit(vecSize, queries, data, dataLocSorted, usePrefetch);
         },
-        "sorted split multi-threaded scan");
+        "sorted split multi-threaded scan", dataToRead);
 
   bench([&](){
           scanMultiThreadSplit(vecSize, queries, data, dataLoc, usePrefetch);
         },
-        "unsorted split multi-threaded scan");
+        "unsorted split multi-threaded scan", dataToRead);
 
   bench([&](){
           scanMultiThreadMix(vecSize, queries, data, dataLocSorted);
         },
-        "sorted mix multi-threaded scan");
+        "sorted mix multi-threaded scan", dataToRead);
 
   bench([&](){
           scanMultiThreadMix(vecSize, queries, data, dataLoc);
         },
-        "unsorted mix multi-threaded scan");
+        "unsorted mix multi-threaded scan", dataToRead);
 
   bench([&](){
           scan(vecSize, queries, data, dataLocSorted, usePrefetch);
         },
-        "sorted scan");
+        "sorted scan", dataToRead);
 
   bench([&](){
           scan(vecSize, queries, data, dataLoc, usePrefetch);
         },
-        "unsorted scan");
+        "unsorted scan", dataToRead);
 
   return 0;
 }
