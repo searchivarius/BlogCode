@@ -5,6 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <mutex>
+#include <cassert>
 
 // This is only for _mm_prefetch
 #include <x86intrin.h>
@@ -15,9 +16,11 @@ using namespace std;
 
 #define MANUAL_VECTORIZE
 
-const float  scanFrac = 0.01;
+const float mulConst = 1e-5;
 const size_t dataQty = 1000000; // 4 * vecSize * dataQty must be >> than the L3 cache size
-const size_t queryQty = 10000;
+const size_t queryQty = 5000;
+const size_t numThreads = std::thread::hardware_concurrency();
+
 
 int defaultRandomSeed = 0;
 
@@ -30,10 +33,7 @@ inline RandomGeneratorType& getThreadLocalRandomGenerator() {
 }
 
 template <class Function>
-inline void parallelFor(size_t start, size_t end, size_t numThreads, Function fn) {
-  if (numThreads <= 0) {
-    numThreads = std::thread::hardware_concurrency();
-  }
+inline void parallelFor(size_t start, size_t end, Function fn) {
 
   if (numThreads == 1) {
     for (size_t id = start; id < end; id++) {
@@ -178,30 +178,31 @@ void scan(const size_t vecSize,
           const vector<float>& data,
           const vector<size_t>& dataLoc,
           bool usePrefetch = false) {
-  size_t sum = 0;
+  double sum = 0;
 
   size_t queryQty = queries.size() / vecSize;
   const float *pDataBeg = &data[0];
 
-  const float normConst = 10.0 / (1.0 + dataLoc.size());
+  const float normConst = mulConst / vecSize;
 
   // Query is accessed in the outer loop so it could be cached well
   for (size_t iq = 0; iq < queryQty; ++iq) {
     const float *pQuery = &queries[iq * vecSize];
+    assert(pQuery + vecSize <= &queries[0] + queries.size());
 
     if (dataLoc.size() < 1) 
       continue;
 
-    for (size_t k = 0; k < dataLoc.size() - 1; ++k) {
-      const float *pData = pDataBeg + dataLoc[k] * vecSize;
-      //cout << dataLoc[k] << " " << pData[0] << endl;
+    for (size_t id = 0; id < dataLoc.size() - 1; ++id) {
+      const float *pData = pDataBeg + dataLoc[id] * vecSize;
+      assert(pData + vecSize <= &data[0] + data.size());
       if (usePrefetch) {
-        const float *pDataNext = pDataBeg + dataLoc[k+1] * vecSize;
+        const float *pDataNext = pDataBeg + dataLoc[id+1] * vecSize;
         _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
       }
-      sum += k + dotProd(pQuery, pData, vecSize);
+      double val = normConst * (double)dotProd(pQuery, pData, vecSize);
+      sum += val; 
     }
-    sum *= normConst;
   }
 
   cout << "Ignore sum: " << sum << endl;
@@ -211,29 +212,35 @@ void scanMultiThreadMix(const size_t vecSize,
                      const vector<float>& queries,
                      const vector<float>& data,
                      const vector<size_t>& dataLoc) {
-  std::atomic<size_t>  sum(0);
-
   size_t queryQty = queries.size() / vecSize;
   const float *pDataBeg = &data[0];
 
-  const float normConst = 10.0 / (1.0 + dataLoc.size());
+  vector<double> allSum(numThreads);
+  double* pAllSum=&allSum[0];
+  const float normConst = mulConst / vecSize;
 
   // Query is accessed in the outer loop so it could be cached well
   for (size_t iq = 0; iq < queryQty; ++iq) {
     const float *pQuery = &queries[iq * vecSize];
+    assert(pQuery + vecSize <= &queries[0] + queries.size());
 
-    if (dataLoc.size() < 1) 
-      continue;
-
-    parallelFor(0, dataLoc.size() - 1, 0 /* use all threads */, 
-                [&](size_t k, size_t ) {
+    parallelFor(0, dataLoc.size(), 
+                [&](size_t k, size_t threadId) {
+      assert(dataLoc[k]*vecSize < data.size());
+      assert(threadId < numThreads);
       const float *pData = pDataBeg + dataLoc[k] * vecSize;
-      sum.fetch_add(k + dotProd(pQuery, pData, vecSize));
+
+      double val = normConst * (double)dotProd(pQuery, pData, vecSize);
+      pAllSum[threadId] +=  val;
     });
-    sum = sum.fetch_add(0) * normConst;
   }
 
-  cout << "Ignore sum: " << sum << endl;
+  double sum = 0;
+  for (double s : allSum) {
+    sum += s;
+  }
+
+  cout << "Ignore sum: " << sum << " # of threads: " << numThreads << endl;
 }
 
 void scanMultiThreadSplit(const size_t vecSize,
@@ -241,26 +248,27 @@ void scanMultiThreadSplit(const size_t vecSize,
                      const vector<float>& data,
                      const vector<size_t>& dataLoc, 
                      bool usePrefetch) {
-  std::atomic<size_t>  sum(0);
 
   size_t queryQty = queries.size() / vecSize;
   const float *pDataBeg = &data[0];
+  const float normConst = mulConst / vecSize;
 
-  const float normConst = 10.0 / (1.0 + dataLoc.size());
-
-  size_t  numThreads = std::thread::hardware_concurrency();
+  vector<double> allSum(numThreads);
+  double* pAllSum = &allSum[0];
 
   // Query is accessed in the outer loop so it could be cached well
   for (size_t iq = 0; iq < queryQty; ++iq) {
     const float *pQuery = &queries[iq * vecSize];
+    assert(pQuery + vecSize <= &queries[0] + queries.size());
 
     if (dataLoc.size() < 1) 
       continue;
 
     size_t chunkSize = dataLoc.size() / numThreads;
 
-    parallelFor(0, numThreads, numThreads, 
-                [&](size_t , size_t threadId) {
+    parallelFor(0, numThreads, 
+                [&](size_t k, size_t threadId) {
+      assert(threadId < numThreads);
       size_t start = threadId * chunkSize; 
       size_t end = min(chunkSize + threadId * chunkSize, dataLoc.size()); 
       if (threadId + 1 == numThreads) {
@@ -273,18 +281,25 @@ void scanMultiThreadSplit(const size_t vecSize,
 
       for (size_t k = start; k < end - 1; ++k) {
         const float *pData = pDataBeg + dataLoc[k] * vecSize;
+        assert(pData + vecSize <= &data[0] + data.size());
         if (usePrefetch) {
           const float *pDataNext = pDataBeg + dataLoc[k+1] * vecSize;
           _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
         }
-        sum.fetch_add(k + dotProd(pQuery, pData, vecSize));
+        double val = normConst * (double)dotProd(pQuery, pData, vecSize);
+        pAllSum[threadId] += val;
+        
       }
       
     });
-    sum = sum.fetch_add(0) * normConst;
   }
 
-  cout << "Ignore sum: " << sum << endl;
+  double sum = 0;
+  for (double s : allSum) {
+    sum += s;
+  }
+
+  cout << "Ignore sum: " << sum << " # of threads: " << numThreads << endl;
 }
 
 template <typename F>
@@ -301,16 +316,18 @@ int main(int argc, char* argv[]) {
   vector<size_t> dataLoc; 
   vector<size_t> dataLocSorted; 
 
-  if (argc != 3) {
-    cout << "Usage: " << argv[0] << " <vector size, e.g., 32> <use prefetch>" << endl;
+  if (argc != 4) {
+    cout << "Usage: " << argv[0] << " <vector size, e.g., 32> <use prefetch flag> <a fraction of data scanned, e.g., 0.1 or 0.01>" << endl;
     return 1;
   }
   size_t vecSize = atoi(argv[1]);
   bool usePrefetch = atoi(argv[2]) != 0;
+  float scanFrac = atof(argv[3]);
+  size_t scanQty = (size_t) (scanFrac * dataQty);
   cout << "Vector size: " << vecSize << endl;
   cout << "Use prefetch: " << usePrefetch <<  endl;
+  cout << "Fraction scanned: " << scanFrac <<  " # of entries to be scanned: " << scanQty << endl;
 
-  size_t scanQty = (size_t) (scanFrac * dataQty);
 
   genRandData(dataQty, vecSize, data);
   genRandData(queryQty, vecSize, queries);
