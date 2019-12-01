@@ -248,7 +248,56 @@ void scanMultiThreadMix(const size_t vecSize,
   cout << "Ignore sum: " << sum << " # of threads: " << numThreads << endl;
 }
 
-void scanMultiThreadSplit(const size_t vecSize,
+void scanMultiThreadSplitRobin(const size_t vecSize,
+                     const vector<float>& queries,
+                     const vector<float>& data,
+                     const vector<size_t>& dataLoc, 
+                     bool usePrefetch) {
+
+  size_t queryQty = queries.size() / vecSize;
+  const float *pDataBeg = &data[0];
+  const float normConst = mulConst / vecSize;
+
+  vector<float> allSum(numThreads);
+
+  // Query is accessed in the outer loop so it could be cached well
+  for (size_t iq = 0; iq < queryQty; ++iq) {
+    const float *pQuery = &queries[iq * vecSize];
+    assert(pQuery + vecSize <= &queries[0] + queries.size());
+
+    if (dataLoc.size() < 1) 
+      continue;
+
+    parallelFor(0, numThreads, 
+                [&](size_t k, size_t threadId) {
+      assert(threadId < numThreads);
+
+      const size_t dataQty = dataLoc.size();
+      for (size_t k = 0; k < dataQty; ++k) {
+        if (k % numThreads != threadId) continue;
+        const float *pData = pDataBeg + dataLoc[k] * vecSize;
+        assert(pData + vecSize <= &data[0] + data.size());
+        if (usePrefetch) {
+          const float *pDataNext = pDataBeg + dataLoc[k+1] * vecSize;
+          _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
+        }
+        float val = normConst * (float)dotProd(pQuery, pData, vecSize);
+        allSum[threadId] += val;
+        
+      }
+      
+    });
+  }
+
+  float sum = 0;
+  for (float s : allSum) {
+    sum += s;
+  }
+
+  cout << "Ignore sum: " << sum << " # of threads: " << numThreads << endl;
+}
+
+void scanMultiThreadSplitChunk(const size_t vecSize,
                      const vector<float>& queries,
                      const vector<float>& data,
                      const vector<size_t>& dataLoc, 
@@ -273,6 +322,7 @@ void scanMultiThreadSplit(const size_t vecSize,
     parallelFor(0, numThreads, 
                 [&](size_t k, size_t threadId) {
       assert(threadId < numThreads);
+
       size_t start = threadId * chunkSize; 
       size_t end = min(chunkSize + threadId * chunkSize, dataLoc.size()); 
       if (threadId + 1 == numThreads) {
@@ -378,14 +428,24 @@ int main(int argc, char* argv[]) {
   cout << "Data per thread (MBs): " << (dataToRead/numThreads/1e6) << endl;
 
   bench([&](){
-          scanMultiThreadSplit(vecSize, queries, data, dataLocSorted, usePrefetch);
+          scanMultiThreadSplitRobin(vecSize, queries, data, dataLocSorted, usePrefetch);
         },
-        "sorted split multi-threaded scan", dataToRead);
+        "sorted round-robin split multi-threaded scan", dataToRead);
 
   bench([&](){
-          scanMultiThreadSplit(vecSize, queries, data, dataLoc, usePrefetch);
+          scanMultiThreadSplitRobin(vecSize, queries, data, dataLoc, usePrefetch);
         },
-        "unsorted split multi-threaded scan", dataToRead);
+        "unsorted round-robin split multi-threaded scan", dataToRead);
+
+  bench([&](){
+          scanMultiThreadSplitChunk(vecSize, queries, data, dataLocSorted, usePrefetch);
+        },
+        "sorted chunk split multi-threaded scan", dataToRead);
+
+  bench([&](){
+          scanMultiThreadSplitChunk(vecSize, queries, data, dataLoc, usePrefetch);
+        },
+        "unsorted chunk split multi-threaded scan", dataToRead);
 
   bench([&](){
           scanMultiThreadMix(vecSize, queries, data, dataLocSorted);
