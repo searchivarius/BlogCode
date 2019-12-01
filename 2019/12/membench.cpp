@@ -17,8 +17,6 @@ using namespace std;
 #define MANUAL_VECTORIZE
 
 const float mulConst = 1e-5;
-const size_t dataQty = 1000000; // 4 * vecSize * dataQty must be >> than the L3 cache size
-const size_t queryQty = 5000;
 const size_t numThreads = std::thread::hardware_concurrency();
 
 
@@ -141,8 +139,11 @@ float dotProd(const float *pVect1, const float *pVect2, const size_t qty) {
   _mm256_store_ps(tmpRes, sum);
   float res = tmpRes[0] + tmpRes[1] + tmpRes[2] + tmpRes[3] + tmpRes[4] + tmpRes[5] + tmpRes[6] + tmpRes[7];
 
-  for (size_t i = qty16 * 16; i < qty; ++i) {
-    res += v1[i] * v2[i];
+  
+  while (pVect1 < pEnd1) {
+    res += (*pVect1) * (*pVect2);
+    pVect1++;
+    pVect2++;
   }
 
   return (res);
@@ -161,6 +162,7 @@ void genRandData(size_t vecQty, size_t vecSize, vector<float>& res) {
   res.resize(vecSize * vecQty);
   for (size_t i = 0; i < res.size(); ++i) {
     res[i] = randomReal<float>();
+    assert(res[i] >= 0);
   }
   cout << "Generated " << vecQty << " vectors of the size " << vecSize << endl;
 }
@@ -178,7 +180,7 @@ void scan(const size_t vecSize,
           const vector<float>& data,
           const vector<size_t>& dataLoc,
           bool usePrefetch = false) {
-  double sum = 0;
+  float sum = 0;
 
   size_t queryQty = queries.size() / vecSize;
   const float *pDataBeg = &data[0];
@@ -200,7 +202,7 @@ void scan(const size_t vecSize,
         const float *pDataNext = pDataBeg + dataLoc[id+1] * vecSize;
         _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
       }
-      double val = normConst * (double)dotProd(pQuery, pData, vecSize);
+      float val = normConst * (float)dotProd(pQuery, pData, vecSize);
       sum += val; 
     }
   }
@@ -215,8 +217,7 @@ void scanMultiThreadMix(const size_t vecSize,
   size_t queryQty = queries.size() / vecSize;
   const float *pDataBeg = &data[0];
 
-  vector<double> allSum(numThreads);
-  double* pAllSum=&allSum[0];
+  vector<float> allSum(numThreads);
   const float normConst = mulConst / vecSize;
 
   // Query is accessed in the outer loop so it could be cached well
@@ -230,13 +231,17 @@ void scanMultiThreadMix(const size_t vecSize,
       assert(threadId < numThreads);
       const float *pData = pDataBeg + dataLoc[k] * vecSize;
 
-      double val = normConst * (double)dotProd(pQuery, pData, vecSize);
-      pAllSum[threadId] +=  val;
+      float val = normConst * (float)dotProd(pQuery, pData, vecSize);
+      if (val < 0) {
+        cout << "k=" << k << " tid=" << threadId << " data.size()=" << data.size() << " iq=" << iq << endl;
+      }
+      assert(val >= 0);
+      allSum[threadId] +=  val;
     });
   }
 
-  double sum = 0;
-  for (double s : allSum) {
+  float sum = 0;
+  for (float s : allSum) {
     sum += s;
   }
 
@@ -253,8 +258,7 @@ void scanMultiThreadSplit(const size_t vecSize,
   const float *pDataBeg = &data[0];
   const float normConst = mulConst / vecSize;
 
-  vector<double> allSum(numThreads);
-  double* pAllSum = &allSum[0];
+  vector<float> allSum(numThreads);
 
   // Query is accessed in the outer loop so it could be cached well
   for (size_t iq = 0; iq < queryQty; ++iq) {
@@ -286,16 +290,16 @@ void scanMultiThreadSplit(const size_t vecSize,
           const float *pDataNext = pDataBeg + dataLoc[k+1] * vecSize;
           _mm_prefetch((char *)pDataNext, _MM_HINT_T0);
         }
-        double val = normConst * (double)dotProd(pQuery, pData, vecSize);
-        pAllSum[threadId] += val;
+        float val = normConst * (float)dotProd(pQuery, pData, vecSize);
+        allSum[threadId] += val;
         
       }
       
     });
   }
 
-  double sum = 0;
-  for (double s : allSum) {
+  float sum = 0;
+  for (float s : allSum) {
     sum += s;
   }
 
@@ -316,13 +320,42 @@ int main(int argc, char* argv[]) {
   vector<size_t> dataLoc; 
   vector<size_t> dataLocSorted; 
 
-  if (argc != 4) {
-    cout << "Usage: " << argv[0] << " <vector size, e.g., 32> <use prefetch flag> <a fraction of data scanned, e.g., 0.1 or 0.01>" << endl;
-    return 1;
+  size_t    vecSize = 100;
+  bool      usePrefetch = true;
+  float     scanFrac = 0.01;
+  size_t    dataQty = 1000000; // 4 * scanFrac * vecSize * dataQty should be >> than the L3 cache size
+  size_t    queryQty = 5000;
+
+  for (int i = 1; i < argc; ++i) {
+    string curr(argv[i]);
+    if (curr.substr(0, 2) != "--") {
+      cerr << "Invalid option: " << curr << endl; 
+      return 1;
+    }
+    curr = curr.substr(2);
+    if (i + 1 == argc) {
+      cerr << "No argument after option: " << curr << endl;
+      return 1;
+    }
+    i++;
+    if (curr == "vec_size") {
+      vecSize = atoi(argv[i]);
+    } else if (curr == "data_qty") {
+      dataQty = atoi(argv[i]);
+    } else if (curr == "query_qty") {
+      queryQty = atoi(argv[i]);
+    } else if (curr == "use_prefetch") {
+      usePrefetch = atoi(argv[i]) != 0;
+    } else if (curr == "scan_frac") {
+      scanFrac = atof(argv[i]);
+    } else {
+      cerr << "Unknown option" << endl;
+      return 1;
+    }
   }
-  size_t vecSize = atoi(argv[1]);
-  bool usePrefetch = atoi(argv[2]) != 0;
-  float scanFrac = atof(argv[3]);
+
+  assert(scanFrac > 0 && scanFrac <= 1);
+
   size_t scanQty = (size_t) (scanFrac * dataQty);
   cout << "Vector size: " << vecSize << endl;
   cout << "Use prefetch: " << usePrefetch <<  endl;
@@ -341,6 +374,8 @@ int main(int argc, char* argv[]) {
   cout << "# of data locations for sequential access: " << dataLocSorted.size() << endl;
 
   float dataToRead = sizeof(float) * dataLocSorted.size() * vecSize * queryQty;
+
+  cout << "Data per thread (MBs): " << (dataToRead/numThreads/1e6) << endl;
 
   bench([&](){
           scanMultiThreadSplit(vecSize, queries, data, dataLocSorted, usePrefetch);
