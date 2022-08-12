@@ -16,9 +16,10 @@ pip install "accelerate"
 echo "Installation finished!"
 
 BERT_MODEL=bert-large-uncased
-MAX_TRAIN_SAMPLES=5000
+MAX_TRAIN_SAMPLES=20000
 MAX_EVAL_SAMPLES=10000
 BATCH_SIZE=8
+SEED=0
 OUTPUT_PREF=output_res
 
 rm -f run_qa_no_trainer.py* utils_qa.py*
@@ -34,10 +35,11 @@ python run_qa_no_trainer.py \
   --per_device_train_batch_size $BATCH_SIZE \
   --gradient_accumulation_steps 1 \
   --learning_rate 3e-5 \
+  --seed $SEED \
   --dataset_name squad \
   --max_seq_length 384 \
   --doc_stride 128  \
-  --output_dir ${OUTPUT_PREF}_1gpu 2>&1|tee ${OUTPUT_PREF}_1gpu/run.log
+  --output_dir ${OUTPUT_PREF}_1gpu 2>&1|tee 1gpu_run.log
 
 for grad_accum_steps in 1 2 4 8 16 ; do
   accelerate launch  run_qa_no_trainer.py \
@@ -47,8 +49,9 @@ for grad_accum_steps in 1 2 4 8 16 ; do
   --per_device_train_batch_size $BATCH_SIZE \
   --gradient_accumulation_steps $grad_accum_steps \
   --learning_rate 3e-5 \
+  --seed $SEED \
   --dataset_name squad \
   --max_seq_length 384 \
   --doc_stride 128  \
-  --output_dir ${OUTPUT_PREF}_accum_steps_${grad_accum_steps} 2>&1|tee ${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/run.log
+  --output_dir ${OUTPUT_PREF}_accum_steps_${grad_accum_steps} 2>&1|tee mult_gpus_accum_steps_${grad_accum_steps}_run.log
 done
