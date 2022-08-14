@@ -15,7 +15,6 @@
 # limitations under the License.
 """
 Fine-tuning a 🤗 Transformers model for question answering using 🤗 Accelerate.
-Small but important modification by Leonid Boytsov: support for non-synchronous SGD.
 """
 # You can also adapt this script on your own question answering task. Pointers for this are left as comments.
 
@@ -185,12 +184,6 @@ def parse_args():
         type=int,
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
-    )
-    parser.add_argument(
-        "--no_sync_steps",
-        type=int,
-        default=1,
-        help="Number of updates steps performing synchronization.",
     )
     parser.add_argument(
         "--lr_scheduler_type",
@@ -767,9 +760,6 @@ def main():
         num_training_steps=args.max_train_steps,
     )
 
-    orig_model = model
-    orig_optimizer = optimizer
-
     # Prepare everything with our `accelerator`.
     model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
         model, optimizer, train_dataloader, eval_dataloader, lr_scheduler
@@ -809,7 +799,6 @@ def main():
     logger.info(f"  Instantaneous batch size per device = {args.per_device_train_batch_size}")
     logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
-    logger.info(f"  Number of steps without synchronization  = {args.no_sync_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     # Only show the progress bar once on each machine.
@@ -845,7 +834,6 @@ def main():
 
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
-        orig_model.train()
         if args.with_tracking:
             total_loss = 0
         for step, batch in enumerate(train_dataloader):
@@ -854,27 +842,17 @@ def main():
                 if resume_step is not None and step < resume_step:
                     completed_steps += 1
                     continue
-            grad_sync = (step % args.no_sync_steps == 0) or (step == len(train_dataloader) - 1)
-            if grad_sync:
-                curr_model = model
-                curr_optimizer = optimizer
-            else:
-                curr_model = orig_model
-                curr_optimizer = orig_optimizer
-            outputs = curr_model(**batch)
+            outputs = model(**batch)
             loss = outputs.loss
             # We keep track of the loss at each epoch
             if args.with_tracking:
                 total_loss += loss.detach().float()
             loss = loss / args.gradient_accumulation_steps
-            if grad_sync:
-                accelerator.backward(loss)
-            else:
-                loss.backward()
+            accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                curr_optimizer.step()
+                optimizer.step()
                 lr_scheduler.step()
-                curr_optimizer.zero_grad()
+                optimizer.zero_grad()
                 progress_bar.update(1)
                 completed_steps += 1
 
@@ -918,7 +896,6 @@ def main():
     all_end_logits = []
 
     model.eval()
-    orig_model.eval()
 
     for step, batch in enumerate(eval_dataloader):
         with torch.no_grad():
