@@ -18,10 +18,10 @@ echo "Installation finished!"
 BERT_MODEL=bert-large-uncased
 BATCH_SIZE=8
 
-OUTPUT_PREF=output_res_${MAX_TRAIN_SAMPLES}
 LR=3e-5
 
 for MAX_TRAIN_SAMPLES in 50000 5000 ; do
+    OUTPUT_PREF=output_res_${MAX_TRAIN_SAMPLES}
 
 for SEED in 0 1 2 ; do
 
