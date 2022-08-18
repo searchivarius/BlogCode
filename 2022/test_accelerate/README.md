@@ -21,4 +21,4 @@ wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples
 wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples/pytorch/question-answering/utils_qa.py
 ```
 
-For the K-batch synchronous version, we made small, but important modifications of `run_qa_no_trainer.py`, which enabled synchronization every K-batches (rather than synchronization every batch).
+For the K-batch synchronous version, we made small, but important modifications of `run_qa_no_trainer.py`, which enabled synchronization every K-batches (rather than synchronization every batch). Note, however, that it is only a **hacky proof-of-concept** implementation (which likely does not fully synchronizes gradients), but it works pretty well.
