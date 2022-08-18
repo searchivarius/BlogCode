@@ -11,3 +11,13 @@ Likewise, you may want to change the number of training examples, or run these e
 
 1. Linux system with multiple GPUs and CUDA installed.
 2. conda
+
+## Trainers
+
+For the synchronized SGD we used standard HuggingFace scripts with a tiny modification to save overall training time:
+```
+wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples/pytorch/question-answering/run_qa_no_trainer.py
+wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples/pytorch/question-answering/utils_qa.py
+```
+
+For the K-batch synchronous version, we made small, but important modifications of `run_qa_no_trainer.py`, which enabled synchronization every K-batches (rather than synchronization every batch).

@@ -20,8 +20,29 @@ BATCH_SIZE=8
 
 LR=3e-5
 
-for MAX_TRAIN_SAMPLES in 50000 5000 ; do
-    OUTPUT_PREF=output_res_${MAX_TRAIN_SAMPLES}
+if [ ! -d "results" ] ; then
+    mkdir -p "results"
+fi
+
+for MAX_TRAIN_SAMPLES in 4000 40000 ; do
+    OUTPUT_PREF=results/output_res_${MAX_TRAIN_SAMPLES}
+
+for SEED in 0 1 2 ; do
+    out_dir=${OUTPUT_PREF}_1gpu/$SEED/
+    rm -f $out_dir
+    mkdir -p $out_dir
+    python run_qa_no_trainer.py \
+      --max_train_samples $MAX_TRAIN_SAMPLES \
+      --model_name_or_path bert-large-uncased \
+      --per_device_train_batch_size $BATCH_SIZE \
+      --gradient_accumulation_steps 1 \
+      --learning_rate $LR \
+      --seed $SEED \
+      --dataset_name squad \
+      --max_seq_length 384 \
+      --doc_stride 128  \
+      --output_dir $out_dir  2>&1|tee $out_dir/run.log
+done
 
 for SEED in 0 1 2 ; do
 
@@ -45,23 +66,8 @@ for SEED in 0 1 2 ; do
           --output_dir $out_dir  2>&1|tee $out_dir/run.log
     done
 
-    out_dir=${OUTPUT_PREF}_1gpu/$SEED/
-    rm -f $out_dir
-    mkdir -p $out_dir
-    python run_qa_no_trainer.py \
-      --max_train_samples $MAX_TRAIN_SAMPLES \
-      --model_name_or_path bert-large-uncased \
-      --per_device_train_batch_size $BATCH_SIZE \
-      --gradient_accumulation_steps 1 \
-      --learning_rate $LR \
-      --seed $SEED \
-      --dataset_name squad \
-      --max_seq_length 384 \
-      --doc_stride 128  \
-      --output_dir $out_dir  2>&1|tee $out_dir/run.log
-
     for grad_accum_steps in 1 2 4 8 16 ; do
-        output_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
+        out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
         rm -f $out_dir
         mkdir -p $out_dir
         accelerate launch  run_qa_no_trainer.py \
