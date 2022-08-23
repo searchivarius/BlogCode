@@ -15,6 +15,7 @@
 # limitations under the License.
 """
 Fine-tuning a 🤗 Transformers model for question answering using 🤗 Accelerate.
+Modification by Leonid (Leo) Boytsov: added support for local SGD.
 """
 # You can also adapt this script on your own question answering task. Pointers for this are left as comments.
 
@@ -250,10 +251,10 @@ def parse_args():
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument(
-        "--no_sync_steps",
+        "--local_sgd_cycle_steps",
         type=int,
         default=1,
-        help="Number of updates steps performing synchronization.",
+        help="The length of local SGD cycle (we sync in the end).",
     )
     parser.add_argument(
         "--lr_scheduler_type",
@@ -937,7 +938,7 @@ def main():
                     lr_scheduler.step()
                     optimizer.zero_grad()
 
-                    if step % (args.no_sync_steps) == 0:
+                    if step % (args.local_sgd_cycle_steps) == 0:
                         if sync_qty < max_sync_qty:
                             sync_qty += 1
                             # unfortunately monitored_barrier requires GLOO
