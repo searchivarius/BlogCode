@@ -54,70 +54,9 @@ from transformers import (
 )
 from transformers.utils import check_min_version, get_full_repo_name, send_example_telemetry
 from transformers.utils.versions import require_version
+
 from utils_qa import postprocess_qa_predictions
-
-"""
-  A dummy autocast class allowing for easy enabling/disabling of AMP.
-"""
-class DummyAutoCast:
-
-    def __enter__(self):
-        return self
-    def __exit__(self, type, value, tb):
-        pass
-
-
-"""
-  A dummy gradient scaler class allowing for easy enabling/disabling of AMP.
-"""
-class DummyGradScaler:
-    # just return the unscaled loss
-    def scale(self, loss):
-        return loss
-
-    # just do the optimizer step without any changes.
-    def step(self, optimizer):
-        optimizer.step()
-
-    # clearly nothing to update here
-    def update(self):
-        pass
-
-
-"""
-  There's "enabled" flag in autocast and GradScaler, however, 
-  it is not clear if using it has no effect (as we need). 
-  To ensure autocast is not involved at all, we introduce these dummy classes.
-
-  As an additional benefit, this,  permits using older version of 
-  Pytorch that have no built-in amp. 
-  
-  Thus, if one does not have amp or you does not want to use it,
-  we do not have to use different training code.
-
-"""
-def get_amp_processors(enabled):
-    if enabled:
-      from torch.cuda.amp import autocast, GradScaler
-      return autocast, GradScaler()
-    else:
-      return DummyAutoCast, DummyGradScaler()
-
-
-def avg_model_params(model, amp):
-    """
-       Average model parameters across all GPUs.
-       Set amp to True, to enable automatic mixed-precision.
-    """
-    auto_cast_class, scaler = get_amp_processors(amp)
-        
-    with auto_cast_class():
-        qty = float(dist.get_world_size())
-        for prm in model.parameters():
-            dist.all_reduce(prm.data, op=torch.distributed.ReduceOp.SUM)
-            prm.data /= qty
-    
-
+from utils_distr import avg_model_params
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -628,7 +567,13 @@ def main():
             # Number of samples might increase during Feature Creation, We select only specified max samples
             train_dataset = train_dataset.select(range(args.max_train_samples))
 
-    max_sync_qty = len(train_dataset) // dist.get_world_size()
+    #
+    # This should never exceed the number of steps in any process.
+    # If this value is computed incorrectly, then deadlocks may happen
+    # if batches are not divided evenly among processes, i.e.,
+    # when one process has fewer optimization steps than other processes.
+    #
+    max_sync_qty = len(train_dataset) // (args.args.per_device_train_batch_size * dist.get_world_size())
     if accelerator.is_main_process:
         print('Number of synchronization steps', max_sync_qty)
 
@@ -939,11 +884,10 @@ def main():
                     optimizer.zero_grad()
 
                     if step % (args.local_sgd_cycle_steps) == 0:
+                        # Each process needs to run exactly the same number of synchronization steps
                         if sync_qty < max_sync_qty:
                             sync_qty += 1
-                            # unfortunately monitored_barrier requires GLOO
-                            #dist.monitored_barrier(timeout=60) # should be in seconds IMHO
-                            dist.barrier() # should be in seconds IMHO
+                            accelerator.wait_for_everyone()
                             avg_model_params(model, amp=accelerator.use_fp16)
 
             progress_bar.update(1)
