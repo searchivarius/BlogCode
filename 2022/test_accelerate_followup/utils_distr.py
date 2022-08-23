@@ -70,11 +70,11 @@ def avg_model_params(model, amp):
             prm.data /= qty
     
 
-def comp_max_step_sync_qty(dataset, local_sgd_cycle_steps, batch_size) :
+def comp_max_step_sync_qty(data_loader, local_sgd_cycle_steps) :
     """
       Compute a (safe) number of synchronization steps.
     """
-    return len(dataset) // (batch_size * local_sgd_cycle_steps * dist.get_world_size())
+    return len(data_loader) // (local_sgd_cycle_steps * dist.get_world_size())
 
 
 class AcceleratorLocalSGD:
@@ -82,12 +82,12 @@ class AcceleratorLocalSGD:
       A helper class to support local SGD on top of Accelerator.
     """
     def __enter__(self):
-        # We can potentially do something useful here, but it is not clear what exactly
+        self.model_sync_obj = self.model.no_sync()
+        self.model_sync_obj.__enter__()
         return self
 
     def __exit__(self, type, value, tb):
-        # We can potentially do something useful here, but it is not clear what exactly
-        pass
+        self.model_sync_obj.__exit__(type, value, tb)
 
     def __init__(self, accelerator, model, local_sgd_cycle_steps, max_step_sync_qty):
         self.accelerator = accelerator

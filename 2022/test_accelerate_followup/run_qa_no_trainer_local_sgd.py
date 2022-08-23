@@ -566,24 +566,6 @@ def main():
             # Number of samples might increase during Feature Creation, We select only specified max samples
             train_dataset = train_dataset.select(range(args.max_train_samples))
 
-    #
-    # This should never exceed the number of steps in any process.
-    # If this value is computed incorrectly, then deadlocks may happen
-    # if batches are not divided evenly among processes, i.e.,
-    # when one process has fewer optimization steps than other processes.
-    #
-    # There is a basic assert below (right before training starts) to ensure that max_sync_qty
-    # at least does not exceed the number of batches in the current process.
-    #
-    # !!! MUST BE CALLED BEFORE accelerator.prepare which partitions the training set into
-    #                           device-specific parts 
-    #    
-    max_step_sync_qty = comp_max_step_sync_qty(train_dataset, 
-                                               local_sgd_cycle_steps=args.local_sgd_cycle_steps,
-                                               batch_size=args.per_device_train_batch_size)
-    if accelerator.is_main_process:
-        print('Number of synchronization steps:', max_step_sync_qty)
-
     # Validation preprocessing
     def prepare_validation_features(examples):
         # Some of the questions have lots of whitespace on the left, which is not useful and will make the
@@ -691,6 +673,23 @@ def main():
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
+
+    #
+    # This should never exceed the number of steps in any process.
+    # If this value is computed incorrectly, then deadlocks may happen
+    # if batches are not divided evenly among processes, i.e.,
+    # when one process has fewer optimization steps than other processes.
+    #
+    # There is a basic assert below (right before training starts) to ensure that max_sync_qty
+    # at least does not exceed the number of batches in the current process.
+    #
+    # !!! MUST BE CALLED BEFORE accelerator.prepare which partitions the training set into
+    #                           device-specific parts 
+    #    
+    max_step_sync_qty = comp_max_step_sync_qty(train_dataloader, 
+                                               local_sgd_cycle_steps=args.local_sgd_cycle_steps)
+    if accelerator.is_main_process:
+        print('Number of synchronization steps:', max_step_sync_qty)
 
     eval_dataset_for_model = eval_dataset.remove_columns(["example_id", "offset_mapping"])
     eval_dataloader = DataLoader(
@@ -864,26 +863,22 @@ def main():
         from time import time
         start_time = time()
 
-    sync_qty = 0
-
+    # We can potentially throw an exception from AcceleratorLocalSGD if we pass the loader there
     assert max_step_sync_qty * args.local_sgd_cycle_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
-        local_sgd = AcceleratorLocalSGD(accelerator=accelerator, 
-                                        model=model, 
-                                        local_sgd_cycle_steps=args.local_sgd_cycle_steps, 
-                                        max_step_sync_qty=max_step_sync_qty)
-        if args.with_tracking:
-            total_loss = 0
-        for step, batch in enumerate(train_dataloader):
-            # We need to skip steps until we reach the resumed step
-            if args.resume_from_checkpoint and epoch == starting_epoch:
-                if resume_step is not None and step < resume_step:
-                    completed_steps += 1
-                    continue
+        with AcceleratorLocalSGD(accelerator=accelerator, model=model, local_sgd_cycle_steps=args.local_sgd_cycle_steps, 
+                                 max_step_sync_qty=max_step_sync_qty) as local_sgd:
+            if args.with_tracking:
+                total_loss = 0
+            for step, batch in enumerate(train_dataloader):
+                # We need to skip steps until we reach the resumed step
+                if args.resume_from_checkpoint and epoch == starting_epoch:
+                    if resume_step is not None and step < resume_step:
+                        completed_steps += 1
+                        continue
 
-            with accelerator.accumulate(model):
-                with accelerator.no_sync(model):
+                with accelerator.accumulate(model):
                     outputs = model(**batch)
                     loss = outputs.loss
                     # We keep track of the loss at each epoch
@@ -896,8 +891,8 @@ def main():
                     optimizer.zero_grad()
                     local_sgd.step()
 
-            progress_bar.update(1)
-            completed_steps += 1
+                progress_bar.update(1)
+                completed_steps += 1
 
             if isinstance(checkpointing_steps, int):
                 if completed_steps % checkpointing_steps == 0:
