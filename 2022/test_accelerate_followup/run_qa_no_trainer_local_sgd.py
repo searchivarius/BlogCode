@@ -30,7 +30,6 @@ from pathlib import Path
 import datasets
 import numpy as np
 import torch
-import torch.distributed as dist
 from datasets import load_dataset, load_metric
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -56,7 +55,7 @@ from transformers.utils import check_min_version, get_full_repo_name, send_examp
 from transformers.utils.versions import require_version
 
 from utils_qa import postprocess_qa_predictions
-from utils_distr import avg_model_params
+from utils_distr import AcceleratorLocalSGD, comp_max_step_sync_qty
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -573,9 +572,17 @@ def main():
     # if batches are not divided evenly among processes, i.e.,
     # when one process has fewer optimization steps than other processes.
     #
-    max_sync_qty = len(train_dataset) // (args.args.per_device_train_batch_size * dist.get_world_size())
+    # There is a basic assert below (right before training starts) to ensure that max_sync_qty
+    # at least does not exceed the number of batches in the current process.
+    #
+    # !!! MUST BE CALLED BEFORE accelerator.prepare which partitions the training set into
+    #                           device-specific parts 
+    #    
+    max_step_sync_qty = comp_max_step_sync_qty(train_dataset, 
+                                               local_sgd_cycle_steps=args.local_sgd_cycle_steps,
+                                               batch_size=args.per_device_train_batch_size)
     if accelerator.is_main_process:
-        print('Number of synchronization steps', max_sync_qty)
+        print('Number of synchronization steps:', max_step_sync_qty)
 
     # Validation preprocessing
     def prepare_validation_features(examples):
@@ -859,8 +866,13 @@ def main():
 
     sync_qty = 0
 
+    assert max_step_sync_qty * args.local_sgd_cycle_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
+        local_sgd = AcceleratorLocalSGD(accelerator=accelerator, 
+                                        model=model, 
+                                        local_sgd_cycle_steps=args.local_sgd_cycle_steps, 
+                                        max_step_sync_qty=max_step_sync_qty)
         if args.with_tracking:
             total_loss = 0
         for step, batch in enumerate(train_dataloader):
@@ -882,13 +894,7 @@ def main():
                     optimizer.step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
-
-                    if step % (args.local_sgd_cycle_steps) == 0:
-                        # Each process needs to run exactly the same number of synchronization steps
-                        if sync_qty < max_sync_qty:
-                            sync_qty += 1
-                            accelerator.wait_for_everyone()
-                            avg_model_params(model, amp=accelerator.use_fp16)
+                    local_sgd.step()
 
             progress_bar.update(1)
             completed_steps += 1
