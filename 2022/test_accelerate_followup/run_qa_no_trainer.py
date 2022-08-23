@@ -849,30 +849,16 @@ def main():
                     continue
 
             with accelerator.accumulate(model):
+                outputs = model(**batch)
+                loss = outputs.loss
+                # We keep track of the loss at each epoch
+                if args.with_tracking:
+                    total_loss += loss.detach().float()
 
-                if step % args.gradient_accumulation_steps == 0:
-                    outputs = model(**batch)
-                    loss = outputs.loss
-                    # We keep track of the loss at each epoch
-                    if args.with_tracking:
-                        total_loss += loss.detach().float()
-
-                    accelerator.backward(loss)
-                    optimizer.step()
-                    lr_scheduler.step()
-                    optimizer.zero_grad()
-                else:
-                    with accelerator.no_sync(model):
-                        outputs = model(**batch)
-                        loss = outputs.loss
-                        # We keep track of the loss at each epoch
-                        if args.with_tracking:
-                            total_loss += loss.detach().float()
-
-                        accelerator.backward(loss)
-                        optimizer.step()
-                        lr_scheduler.step()
-                        optimizer.zero_grad()
+                accelerator.backward(loss)
+                optimizer.step()
+                lr_scheduler.step()
+                optimizer.zero_grad()
 
             # Checks if the accelerator has performed an optimization step behind the scenes
             if accelerator.sync_gradients:
