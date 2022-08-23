@@ -1,6 +1,7 @@
 ## Testing multi-GPU acceleration.
 
-This code was created to test the effectiveness of the Huggingface library [Accelerate](https://github.com/huggingface/accelerate).
+This code was created to test the effectiveness of the Huggingface library [Accelerate](https://github.com/huggingface/accelerate). A detailed description of experiments is provided in the following blog post: ["Benchmarking HuggingFace Accelerator: Synchronous SGD Does Not Scale with PCI Express 3.0"](http://searchivarius.org/blog/benchmarking-huggingface-accelerator-synchronous-sgd-does-not-scale-pci-express-30).
+
 This was motivated by a somewhat anecdotal observation that synchronous SGD does not scale with the number of GPUs when these GPUs are "sitting" on a slow interconnect (i.e., PCI express) rather than being connected using a fast interconnect system such as NVLink.
 
 It was intended to run as an end-to-end example (run the script [run_main.sh](run_main.sh), which does everything including installing the environment and running tests. Some manual intervention might be required, in particular, [by specifying a different CUDA version or changing otherwise an installation script](run_sub.sh).
@@ -20,4 +21,4 @@ wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples
 wget https://raw.githubusercontent.com/huggingface/transformers/v4.21.1/examples/pytorch/question-answering/utils_qa.py
 ```
 
-For the K-batch synchronous version, we made small, but important modifications of `run_qa_no_trainer.py`, which enabled synchronization every K-batches (rather than synchronization every batch).
+For the K-batch synchronous version, we made small, but important modifications of `run_qa_no_trainer.py`, which enabled synchronization every K-batches (rather than synchronization every batch). Note, however, that it is only a **hacky proof-of-concept** implementation (which likely does not fully synchronizes gradients), but it works pretty well.
