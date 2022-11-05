@@ -23,12 +23,12 @@ BASE_LR=3e-5
 gpu_qty=$(nvidia-smi -L|wc -l)
 gpu_adjust_lr=`python -c "print($BASE_LR*$gpu_qty)"`
 
-if [ ! -d "results" ] ; then
-    mkdir -p "results"
+if [ ! -d "results_qa" ] ; then
+    mkdir -p "results_qa"
 fi
 
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
-    OUTPUT_PREF=results/output_res_${MAX_TRAIN_SAMPLES}
+    OUTPUT_PREF=results_qa/output_res_${MAX_TRAIN_SAMPLES}
 
     for SEED in 0 1 2 ; do
         out_dir=${OUTPUT_PREF}_1gpu/$SEED/
@@ -50,7 +50,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     for SEED in 0 1 2 ; do
 
         # These runs for non-synchronous gradient descent
-        for local_sgd_cycle_steps in 1 2 4 8 16 ; do
+        for local_sgd_cycle_steps in 1 2 4 8 16 32 64 128 256 ; do
             out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_cycle_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
@@ -69,7 +69,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
               --output_dir $out_dir  2>&1|tee $out_dir/run.log
         done
 
-        for grad_accum_steps in 1 2 4 8 16 ; do
+        for grad_accum_steps in 1 2 4 8 16 32 64 128 256 ; do
             out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
             rm -r -f $out_dir
             mkdir -p $out_dir
