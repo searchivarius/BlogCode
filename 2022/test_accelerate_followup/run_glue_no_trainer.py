@@ -95,6 +95,11 @@ def parse_args():
         action="store_true",
         help="If passed, pad all samples to `max_seq_length`. Otherwise, dynamic padding is used.",
     )
+    parser.add_argument(
+        "--force_bf16",
+        action="store_true",
+        help="use bf16 even if Accelerator is not configured to do so"
+    )
     parser.add_argument("--max_train_samples",
         type=int,
         default=None,
@@ -217,12 +222,12 @@ def main():
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
     send_example_telemetry("run_glue_no_trainer", args)
 
-    # Initialize the accelerator. We will let the accelerator handle device placement for us in this example.
-    # If we're using tracking, we also need to initialize it here and it will by default pick up all supported trackers
-    # in the environment
-    accelerator = (
-        Accelerator(log_with=args.report_to, logging_dir=args.output_dir) if args.with_tracking else Accelerator()
-    )
+    # Initialize the accelerator. Always use bf16 so that we will have bf16 even if we start it regularly, i.e.,
+    # without accelerate launch
+    if args.force_bf16:
+        accelerator = Accelerator(mixed_precision='bf16')
+    else:
+        accelerator = Accelerator() 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -551,12 +556,13 @@ def main():
                     output_dir = f"step_{completed_steps }"
                     if args.output_dir is not None:
                         output_dir = os.path.join(args.output_dir, output_dir)
-                    accelerator.save_state(output_dir)
+                    #accelerator.save_state(output_dir)
 
             if completed_steps >= args.max_train_steps:
                 break
 
         if accelerator.is_main_process:
+            accelerator.wait_for_everyone()
             end_time = time()
 
         # Evaluation
@@ -615,21 +621,21 @@ def main():
             output_dir = f"epoch_{epoch}"
             if args.output_dir is not None:
                 output_dir = os.path.join(args.output_dir, output_dir)
-            accelerator.save_state(output_dir)
+            #accelerator.save_state(output_dir)
 
     if args.with_tracking:
         accelerator.end_training()
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
-        unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(
-            args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        )
-        if accelerator.is_main_process:
-            tokenizer.save_pretrained(args.output_dir)
-            if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+        #unwrapped_model = accelerator.unwrap_model(model)
+        #unwrapped_model.save_pretrained(
+        #    args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        #)
+        #if accelerator.is_main_process:
+        #    tokenizer.save_pretrained(args.output_dir)
+        #    if args.push_to_hub:
+        #        repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
     if args.task_name == "mnli":
         # Final evaluation on mismatched validation set
