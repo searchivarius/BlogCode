@@ -1,6 +1,7 @@
 #!/bin/bash -e
+
 set -o pipefail
 
-bash -i run_qa_sub.sh
+bash -i run_mnli_sub.sh
 
 
