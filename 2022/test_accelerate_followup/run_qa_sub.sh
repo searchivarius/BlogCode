@@ -38,15 +38,15 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     for SEED in 0 1 2 ; do
 
         # These runs for non-synchronous gradient descent
-        for local_sgd_cycle_steps in 1 2 4 8 16 32 64 128 256 ; do
-            out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_cycle_steps}/$SEED
+        for local_sgd_steps in 1 2 4 8 16 32 64 128 256 ; do
+            out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
     
             # The first run is on a single GPU and without gradient accumulation
             accelerate launch run_qa_no_trainer_local_sgd.py \
               --max_train_samples $MAX_TRAIN_SAMPLES \
-              --local_sgd_cycle_steps $local_sgd_cycle_steps \
+              --local_sgd_steps $local_sgd_steps \
               --model_name_or_path bert-large-uncased \
               --per_device_train_batch_size $BATCH_SIZE \
               --learning_rate $gpu_adjust_lr \

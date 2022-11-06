@@ -55,7 +55,7 @@ from transformers.utils import check_min_version, get_full_repo_name, send_examp
 from transformers.utils.versions import require_version
 
 from utils_qa import postprocess_qa_predictions
-from utils_distr import AcceleratorLocalSGD, comp_max_step_sync_qty
+from utils_local_sgd import AcceleratorLocalSGD, comp_max_step_sync_qty
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -189,10 +189,10 @@ def parse_args():
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument(
-        "--local_sgd_cycle_steps",
+        "--local_sgd_steps",
         type=int,
-        default=1,
-        help="The length of local SGD cycle (we sync in the end).",
+        default=None,
+        help="Number of local SGD steps or None to disable local SGD"
     )
     parser.add_argument(
         "--lr_scheduler_type",
@@ -687,7 +687,7 @@ def main():
     #                           device-specific parts 
     #    
     max_step_sync_qty = comp_max_step_sync_qty(train_dataloader, 
-                                               local_sgd_cycle_steps=args.local_sgd_cycle_steps)
+                                               local_sgd_steps=args.local_sgd_steps)
     if accelerator.is_main_process:
         print('Number of synchronization steps:', max_step_sync_qty)
 
@@ -864,10 +864,10 @@ def main():
         start_time = time()
 
     # We can potentially throw an exception from AcceleratorLocalSGD if we pass the loader there
-    assert max_step_sync_qty * args.local_sgd_cycle_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
+    assert max_step_sync_qty * args.local_sgd_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
-        with AcceleratorLocalSGD(accelerator=accelerator, model=model, local_sgd_cycle_steps=args.local_sgd_cycle_steps, 
+        with AcceleratorLocalSGD(accelerator=accelerator, model=model, local_sgd_steps=args.local_sgd_steps, 
                                  max_step_sync_qty=max_step_sync_qty) as local_sgd:
             if args.with_tracking:
                 total_loss = 0
