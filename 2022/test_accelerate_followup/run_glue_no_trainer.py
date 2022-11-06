@@ -45,8 +45,6 @@ from transformers import (
 from transformers.utils import check_min_version, get_full_repo_name, send_example_telemetry
 from transformers.utils.versions import require_version
 
-from utils_local_sgd import AcceleratorLocalSGD, comp_max_step_sync_qty
-
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0")
 
@@ -148,12 +146,6 @@ def parse_args():
         type=int,
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
-    )
-    parser.add_argument(
-        "--local_sgd_steps",
-        type=int,
-        default=None,
-        help="Number of local SGD steps or None to disable local SGD"
     )
     parser.add_argument(
         "--lr_scheduler_type",
@@ -434,21 +426,6 @@ def main():
     )
     eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
 
-    #
-    # This should never exceed the number of steps in any process.
-    # If this value is computed incorrectly, then deadlocks may happen
-    # if batches are not divided evenly among processes, i.e.,
-    # when one process has fewer optimization steps than other processes.
-    #
-    # There is a basic assert below (right before training starts) to ensure that max_sync_qty
-    # at least does not exceed the number of batches in the current process.
-    #
-    # !!! MUST BE CALLED BEFORE accelerator.prepare which partitions the training set into
-    #                           device-specific parts 
-    #    
-    max_step_sync_qty = comp_max_step_sync_qty(train_dataloader, 
-                                               local_sgd_steps=args.local_sgd_steps)
-
     # Optimizer
     # Split weights in two groups, one with weight decay and the other not.
     no_decay = ["bias", "LayerNorm.weight"]
@@ -549,49 +526,43 @@ def main():
         from time import time
         start_time = time()
 
-    # We can potentially throw an exception from AcceleratorLocalSGD if we pass the loader there
-    if args.local_sgd_steps is not None:
-        assert max_step_sync_qty * args.local_sgd_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
-        with AcceleratorLocalSGD(accelerator=accelerator, model=model, local_sgd_steps=args.local_sgd_steps, 
-                                 max_step_sync_qty=max_step_sync_qty, enabled=args.local_sgd_steps is not None) as local_sgd:
 
-            if args.with_tracking:
-                total_loss = 0
-            for step, batch in enumerate(train_dataloader):
-                # We need to skip steps until we reach the resumed step
-                if args.resume_from_checkpoint and epoch == starting_epoch:
-                    if resume_step is not None and step < resume_step:
-                        completed_steps += 1
-                        continue
-                with accelerator.accumulate(model):
-                    outputs = model(**batch)
-                    loss = outputs.loss
-                    # We keep track of the loss at each epoch
-                    if args.with_tracking:
-                        total_loss += loss.detach().float()
-                    loss = loss / args.gradient_accumulation_steps
-                    accelerator.backward(loss)
-                
-                    optimizer.step()
-                    lr_scheduler.step()
-                    optimizer.zero_grad()
-                    local_sgd.step()
+        if args.with_tracking:
+            total_loss = 0
+        for step, batch in enumerate(train_dataloader):
+            # We need to skip steps until we reach the resumed step
+            if args.resume_from_checkpoint and epoch == starting_epoch:
+                if resume_step is not None and step < resume_step:
+                    completed_steps += 1
+                    continue
+            with accelerator.accumulate(model):
+                outputs = model(**batch)
+                loss = outputs.loss
+                # We keep track of the loss at each epoch
+                if args.with_tracking:
+                    total_loss += loss.detach().float()
+                loss = loss / args.gradient_accumulation_steps
+                accelerator.backward(loss)
+            
+                optimizer.step()
+                lr_scheduler.step()
+                optimizer.zero_grad()
 
-                progress_bar.update(1)
-                completed_steps += 1
-    
-                if isinstance(checkpointing_steps, int):
-                    if completed_steps % checkpointing_steps == 0:
-                        output_dir = f"step_{completed_steps }"
-                        if args.output_dir is not None:
-                            output_dir = os.path.join(args.output_dir, output_dir)
-                        #accelerator.save_state(output_dir)
-    
-                if completed_steps >= args.max_train_steps:
-                    break
-    
+            progress_bar.update(1)
+            completed_steps += 1
+
+            if isinstance(checkpointing_steps, int):
+                if completed_steps % checkpointing_steps == 0:
+                    output_dir = f"step_{completed_steps }"
+                    if args.output_dir is not None:
+                        output_dir = os.path.join(args.output_dir, output_dir)
+                    #accelerator.save_state(output_dir)
+
+            if completed_steps >= args.max_train_steps:
+                break
+
     if accelerator.is_main_process:
         end_time = time()
 
