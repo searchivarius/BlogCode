@@ -186,6 +186,11 @@ def parse_args():
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument(
+        "--force_bf16",
+        action="store_true",
+        help="use bf16 even if Accelerator is not configured to do so"
+    )
+    parser.add_argument(
         "--lr_scheduler_type",
         type=SchedulerType,
         default="linear",
@@ -341,6 +346,8 @@ def main():
     if args.with_tracking:
         accelerator_log_kwargs["log_with"] = args.report_to
         accelerator_log_kwargs["logging_dir"] = args.output_dir
+    if args.force_bf16:
+        accelerator_log_kwargs["mixed_precision"] = 'bf16'
 
     accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
 

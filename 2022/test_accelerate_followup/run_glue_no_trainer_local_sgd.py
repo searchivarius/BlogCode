@@ -232,9 +232,9 @@ def main():
     # Initialize the accelerator. Always use bf16 so that we will have bf16 even if we start it regularly, i.e.,
     # without accelerate launch
     if args.force_bf16:
-        accelerator = Accelerator(mixed_precision='bf16')
+        accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps)
     else:
-        accelerator = Accelerator() 
+        accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps) 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -658,14 +658,14 @@ def main():
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
-        #unwrapped_model = accelerator.unwrap_model(model)
-        #unwrapped_model.save_pretrained(
-        #    args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-        #)
-        #if accelerator.is_main_process:
-        #    tokenizer.save_pretrained(args.output_dir)
-        #    if args.push_to_hub:
-        #        repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+        unwrapped_model = accelerator.unwrap_model(model)
+        unwrapped_model.save_pretrained(
+            args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
+        )
+        if accelerator.is_main_process:
+            tokenizer.save_pretrained(args.output_dir)
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
     if args.task_name == "mnli":
         # Final evaluation on mismatched validation set
