@@ -50,7 +50,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     
         done
 
-        for grad_accum_steps in 1 2 4 8 16 32 64 128 256 ; do
+        for grad_accum_steps in 1 2 3 4 8 16 32 64 128 256 ; do
             out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
             rm -r -f $out_dir
             mkdir -p $out_dir
