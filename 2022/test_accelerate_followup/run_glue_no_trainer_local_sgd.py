@@ -571,7 +571,6 @@ def main():
                     # We keep track of the loss at each epoch
                     if args.with_tracking:
                         total_loss += loss.detach().float()
-                    loss = loss / args.gradient_accumulation_steps
                     accelerator.backward(loss)
                 
                     optimizer.step()
