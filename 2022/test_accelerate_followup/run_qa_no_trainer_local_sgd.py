@@ -673,8 +673,6 @@ def main():
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
-    if accelerator.is_main_process:
-        print('Number of synchronization steps:', max_step_sync_qty)
 
     eval_dataset_for_model = eval_dataset.remove_columns(["example_id", "offset_mapping"])
     eval_dataloader = DataLoader(
@@ -848,8 +846,6 @@ def main():
         from time import time
         start_time = time()
 
-    # We can potentially throw an exception from AcceleratorLocalSGD if we pass the loader there
-    assert max_step_sync_qty * args.local_sgd_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
         with LocalSGD(accelerator=accelerator, model=model, local_sgd_steps=args.local_sgd_steps, 
