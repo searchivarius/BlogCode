@@ -12,7 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Finetuning a 🤗 Transformers model for sequence classification on GLUE."""
+""" 
+Finetuning a 🤗 Transformers model for sequence classification on GLUE using 🤗 Accelerate.
+Modification by Leonid (Leo) Boytsov: added support for local SGD.
+"""
 import argparse
 import json
 import logging
@@ -31,6 +34,7 @@ import transformers
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
+from accelerate.local_sgd import LocalSGD
 from huggingface_hub import Repository
 from transformers import (
     AutoConfig,
@@ -45,7 +49,6 @@ from transformers import (
 from transformers.utils import check_min_version, get_full_repo_name, send_example_telemetry
 from transformers.utils.versions import require_version
 
-from utils_local_sgd import AcceleratorLocalSGD, comp_max_step_sync_qty
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.21.0")
@@ -432,22 +435,9 @@ def main():
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
+    if accelerator.is_main_process:
+        print('Number of synchronization steps:', max_step_sync_qty)
     eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
-
-    #
-    # This should never exceed the number of steps in any process.
-    # If this value is computed incorrectly, then deadlocks may happen
-    # if batches are not divided evenly among processes, i.e.,
-    # when one process has fewer optimization steps than other processes.
-    #
-    # There is a basic assert below (right before training starts) to ensure that max_sync_qty
-    # at least does not exceed the number of batches in the current process.
-    #
-    # !!! MUST BE CALLED BEFORE accelerator.prepare which partitions the training set into
-    #                           device-specific parts 
-    #    
-    max_step_sync_qty = comp_max_step_sync_qty(train_dataloader, 
-                                               local_sgd_steps=args.local_sgd_steps)
 
     # Optimizer
     # Split weights in two groups, one with weight decay and the other not.
@@ -549,13 +539,10 @@ def main():
         from time import time
         start_time = time()
 
-    # We can potentially throw an exception from AcceleratorLocalSGD if we pass the loader there
-    if args.local_sgd_steps is not None:
-        assert max_step_sync_qty * args.local_sgd_steps <= len(train_dataloader), "bug: max_sync_qty is computed incorrectly!"
     for epoch in range(starting_epoch, args.num_train_epochs):
         model.train()
-        with AcceleratorLocalSGD(accelerator=accelerator, model=model, local_sgd_steps=args.local_sgd_steps, 
-                                 max_step_sync_qty=max_step_sync_qty, enabled=args.local_sgd_steps is not None) as local_sgd:
+        with LocalSGD(accelerator=accelerator, model=model, local_sgd_steps=args.local_sgd_steps, 
+                      enabled=args.local_sgd_steps is not None) as local_sgd:
 
             if args.with_tracking:
                 total_loss = 0
