@@ -8,9 +8,10 @@ TASK=mnli
 EPOCHS=3 
 MAX_SEQ_LEN=128
 BERT_MODEL=bert-large-uncased
-BATCH_SIZE=32
 
+BATCH_SIZE=32
 BASE_LR=2e-5
+
 gpu_qty=$(nvidia-smi -L|wc -l)
 gpu_adjust_lr=`python -c "print($BASE_LR*$gpu_qty)"`
 
