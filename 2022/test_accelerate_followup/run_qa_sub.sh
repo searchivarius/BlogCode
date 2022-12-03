@@ -46,6 +46,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     
             # The first run is on a single GPU and without gradient accumulation
             accelerate launch run_qa_no_trainer_local_sgd.py \
+              --force_bf16 \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --local_sgd_steps $local_sgd_steps \
               --model_name_or_path bert-large-uncased \
@@ -63,6 +64,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
             rm -r -f $out_dir
             mkdir -p $out_dir
             accelerate launch  run_qa_no_trainer.py \
+              --force_bf16 \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --model_name_or_path bert-large-uncased \
               --per_device_train_batch_size $BATCH_SIZE \
