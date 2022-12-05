@@ -15,8 +15,8 @@ BASE_LR=2e-5
 gpu_qty=$(nvidia-smi -L|wc -l)
 gpu_adjust_lr=`python -c "print($BASE_LR*$gpu_qty)"`
 
-if [ ! -d "results_qa" ] ; then
-    mkdir -p "results_qa"
+if [ ! -d "results_mnli" ] ; then
+    mkdir -p "results_mnli"
 fi
 
 
