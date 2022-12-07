@@ -202,6 +202,11 @@ def parse_args():
         choices=["linear", "cosine", "cosine_with_restarts", "polynomial", "constant", "constant_with_warmup"],
     )
     parser.add_argument(
+        "--force_bf16",
+        action="store_true",
+        help="use bf16 even if Accelerator is not configured to do so"
+    )
+    parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
     )
     parser.add_argument("--output_dir", type=str, default=None, help="Where to store the final model.")
@@ -351,7 +356,12 @@ def main():
         accelerator_log_kwargs["log_with"] = args.report_to
         accelerator_log_kwargs["logging_dir"] = args.output_dir
 
-    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+    # Initialize the accelerator. Always use bf16 so that we will have bf16 even if we start it regularly, i.e.,
+    # without accelerate launch
+    if args.force_bf16:
+        accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+    else:
+        accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs) 
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
