@@ -235,9 +235,9 @@ def main():
     # Initialize the accelerator. Always use bf16 so that we will have bf16 even if we start it regularly, i.e.,
     # without accelerate launch
     if args.force_bf16:
-        accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+        accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps)
     else:
-        accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs) 
+        accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps)
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
