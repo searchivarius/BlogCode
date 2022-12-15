@@ -9,7 +9,16 @@ BATCH_SIZE=8
 
 BASE_LR=3e-5
 gpu_qty=$(nvidia-smi -L|wc -l)
-gpu_adjust_lr=`python -c "print($BASE_LR*$gpu_qty)"`
+
+check_r=$(($BATCH_SIZE % $gpu_qty))
+if [ "$check_r" != "0" ] ; then
+  echo "The total batch size is not a multiple of the number of GPUs!"
+  exit 1
+fi
+# Let us use split_batches=True instead
+adjusted_batch_size=1
+#adjusted_batch_size=$(($BATCH_SIZE/$gpu_qty))
+#echo "Batch size adjusted for the number of GPUs (only for gradient accumulation with multiple GPUs) : $adjusted_batch_size"
 
 if [ ! -d "results_qa" ] ; then
     mkdir -p "results_qa"
@@ -17,6 +26,49 @@ fi
 
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     OUTPUT_PREF=results_qa/output_res_${MAX_TRAIN_SAMPLES}
+    
+    for SEED in 0 1 2 ; do
+
+        # These runs for non-synchronous gradient descent
+        for local_sgd_steps in 1 2 4 8 16 32 64 128 256 ; do
+            out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_steps}/$SEED
+            rm -r -f $out_dir
+            mkdir -p $out_dir
+    
+            # The first run is on a single GPU and without gradient accumulation
+            accelerate launch run_qa_no_trainer_local_sgd.py \
+              --force_bf16 \
+              --max_train_samples $MAX_TRAIN_SAMPLES \
+              --local_sgd_steps $local_sgd_steps \
+              --model_name_or_path bert-large-uncased \
+              --per_device_train_batch_size $BATCH_SIZE \
+              --learning_rate $BASE_LR \
+              --seed $SEED \
+              --dataset_name squad \
+              --max_seq_length 384 \
+              --doc_stride 128  \
+              --output_dir $out_dir  2>&1|tee $out_dir/run.log
+        done
+
+        for grad_accum_steps in 1 2 4 8 16 32 64 128 256 ; do
+            out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
+            rm -r -f $out_dir
+            mkdir -p $out_dir
+            accelerate launch  run_qa_no_trainer.py \
+              --force_bf16 \
+              --max_train_samples $MAX_TRAIN_SAMPLES \
+              --model_name_or_path bert-large-uncased \
+              --per_device_train_batch_size $adjusted_batch_size \
+              --gradient_accumulation_steps $grad_accum_steps \
+              --learning_rate $BASE_LR \
+              --seed $SEED \
+              --dataset_name squad \
+              --max_seq_length 384 \
+              --doc_stride 128  \
+              --output_dir $out_dir  2>&1|tee $out_dir/run.log
+        done
+    
+    done
 
     for SEED in 0 1 2 ; do
         out_dir=${OUTPUT_PREF}_1gpu/$SEED/
@@ -34,49 +86,6 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
           --max_seq_length 384 \
           --doc_stride 128  \
           --output_dir $out_dir  2>&1|tee $out_dir/run.log
-    done
-    
-    for SEED in 0 1 2 ; do
-
-        # These runs for non-synchronous gradient descent
-        for local_sgd_steps in 1 2 4 8 16 32 64 128 256 ; do
-            out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_steps}/$SEED
-            rm -r -f $out_dir
-            mkdir -p $out_dir
-    
-            # The first run is on a single GPU and without gradient accumulation
-            accelerate launch run_qa_no_trainer_local_sgd.py \
-              --force_bf16 \
-              --max_train_samples $MAX_TRAIN_SAMPLES \
-              --local_sgd_steps $local_sgd_steps \
-              --model_name_or_path bert-large-uncased \
-              --per_device_train_batch_size $BATCH_SIZE \
-              --learning_rate $gpu_adjust_lr \
-              --seed $SEED \
-              --dataset_name squad \
-              --max_seq_length 384 \
-              --doc_stride 128  \
-              --output_dir $out_dir  2>&1|tee $out_dir/run.log
-        done
-
-        for grad_accum_steps in 1 2 4 8 16 32 64 128 256 ; do
-            out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
-            rm -r -f $out_dir
-            mkdir -p $out_dir
-            accelerate launch  run_qa_no_trainer.py \
-              --force_bf16 \
-              --max_train_samples $MAX_TRAIN_SAMPLES \
-              --model_name_or_path bert-large-uncased \
-              --per_device_train_batch_size $BATCH_SIZE \
-              --gradient_accumulation_steps $grad_accum_steps \
-              --learning_rate $gpu_adjust_lr \
-              --seed $SEED \
-              --dataset_name squad \
-              --max_seq_length 384 \
-              --doc_stride 128  \
-              --output_dir $out_dir  2>&1|tee $out_dir/run.log
-        done
-    
     done
 
 done
