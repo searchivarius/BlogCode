@@ -16,7 +16,7 @@ if [ "$check_r" != "0" ] ; then
   exit 1
 fi
 # Let us use split_batches=True instead
-adjusted_batch_size=1
+adjusted_batch_size=$BATCH_SIZE
 #adjusted_batch_size=$(($BATCH_SIZE/$gpu_qty))
 #echo "Batch size adjusted for the number of GPUs (only for gradient accumulation with multiple GPUs) : $adjusted_batch_size"
 
