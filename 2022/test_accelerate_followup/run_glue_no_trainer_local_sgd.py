@@ -104,6 +104,11 @@ def parse_args():
         action="store_true",
         help="use bf16 even if Accelerator is not configured to do so"
     )
+    parser.add_argument(
+        "--force_fp16",
+        action="store_true",
+        help="use fp16 even if Accelerator is not configured to do so"
+    )
     parser.add_argument("--max_train_samples",
         type=int,
         default=None,
@@ -234,8 +239,11 @@ def main():
 
     # Initialize the accelerator. Always use bf16 so that we will have bf16 even if we start it regularly, i.e.,
     # without accelerate launch
+    assert not (args.force_bf16 and args.force_fp16), "Cannot specify both fp16 an bf16!"
     if args.force_bf16:
         accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps)
+    elif args.force_fp16:
+        accelerator = Accelerator(mixed_precision='fp16', gradient_accumulation_steps=args.gradient_accumulation_steps)
     else:
         accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps)
     # Make one log on every process with the configuration for debugging.

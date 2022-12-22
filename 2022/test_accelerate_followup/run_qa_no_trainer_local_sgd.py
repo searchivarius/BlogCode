@@ -207,6 +207,11 @@ def parse_args():
         help="use bf16 even if Accelerator is not configured to do so"
     )
     parser.add_argument(
+        "--force_fp16",
+        action="store_true",
+        help="use fp16 even if Accelerator is not configured to do so"
+    )
+    parser.add_argument(
         "--num_warmup_steps", type=int, default=0, help="Number of steps for the warmup in the lr scheduler."
     )
     parser.add_argument("--output_dir", type=str, default=None, help="Where to store the final model.")
@@ -360,6 +365,8 @@ def main():
     # without accelerate launch
     if args.force_bf16:
         accelerator = Accelerator(mixed_precision='bf16', gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+    elif args.force_fp16:
+        accelerator = Accelerator(mixed_precision='fp16', gradient_accumulation_steps=args.gradient_accumulation_steps)
     else:
         accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs) 
 

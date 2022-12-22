@@ -191,6 +191,11 @@ def parse_args():
         help="use bf16 even if Accelerator is not configured to do so"
     )
     parser.add_argument(
+        "--force_fp16",
+        action="store_true",
+        help="use fp16 even if Accelerator is not configured to do so"
+    )
+    parser.add_argument(
         "--lr_scheduler_type",
         type=SchedulerType,
         default="linear",
@@ -346,8 +351,11 @@ def main():
     if args.with_tracking:
         accelerator_log_kwargs["log_with"] = args.report_to
         accelerator_log_kwargs["logging_dir"] = args.output_dir
+    assert not (args.force_bf16 and args.force_fp16), "Cannot specify both fp16 an bf16!"
     if args.force_bf16:
         accelerator_log_kwargs["mixed_precision"] = 'bf16'
+    if args.force_fp16:
+        accelerator_log_kwargs["mixed_precision"] = 'fp16'
 
     accelerator = Accelerator(split_batches=True, gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
 
