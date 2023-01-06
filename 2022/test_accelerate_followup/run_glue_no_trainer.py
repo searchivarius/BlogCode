@@ -232,7 +232,7 @@ def main():
     if args.force_bf16:
         accelerator = Accelerator(split_batches=True, gradient_accumulation_steps=args.gradient_accumulation_steps, mixed_precision='bf16')
     elif args.force_fp16:
-        accelerator = Accelerator(mixed_precision='fp16', gradient_accumulation_steps=args.gradient_accumulation_steps)
+        accelerator = Accelerator(split_batches=True, gradient_accumulation_steps=args.gradient_accumulation_steps, mixed_precision='fp16')
     else:
         accelerator = Accelerator(split_batches=True, gradient_accumulation_steps=args.gradient_accumulation_steps) 
     # Make one log on every process with the configuration for debugging.
