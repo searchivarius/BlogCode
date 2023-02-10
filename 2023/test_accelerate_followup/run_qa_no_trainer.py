@@ -357,7 +357,7 @@ def main():
     if args.force_fp16:
         accelerator_log_kwargs["mixed_precision"] = 'fp16'
 
-    accelerator = Accelerator(split_batches=True, gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
+    accelerator = Accelerator(split_batches=False, gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
 
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(

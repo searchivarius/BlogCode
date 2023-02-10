@@ -8,37 +8,25 @@ BERT_MODEL=bert-large-uncased
 BATCH_SIZE=8
 
 ONE_GPU_LR=3e-5
-# Attention !!! the multi-GPU learning rates are chosen for the number of GPU equal to 8!!!
-# PS: it is only tuned for one step scenario
-EXPECTED_NUM_GPU=8
-LOCAL_SGD_LR=2.4e-4
-GRAD_ACCUM_LR=6e-5
-gpu_qty=$(./print_accelerate_conf.sh |grep num_processes|cut -d \  -f 2)
-echo "# GPUs to use: $gpu_qty LRs: 1gpu $ONE_GPU_LR local SGD: $LOCAL_SGD_LR gradient accum: $GRAD_ACCUM_LR"
-if [ "$gpu_qty" != "$EXPECTED_NUM_GPU" ] ; then
-  echo "You should use exactly $EXPECTED_NUM_GPU GPUs (not $gpu_qty)"
-  exit 1
-fi
-exit 0
 
-check_r=$(($BATCH_SIZE % $gpu_qty))
-if [ "$check_r" != "0" ] ; then
-  echo "The total batch size is not a multiple of the number of GPUs!"
-  exit 1
-fi
+LOCAL_SGD_LR=6e-5
+GRAD_ACCUM_LR=6e-5
+
+gpu_qty=$(./print_accelerate_conf.sh |grep num_processes|cut -d \  -f 2)
 # Let us use split_batches=True instead
 adjusted_batch_size=$BATCH_SIZE
 
-if [ ! -d "results_qa" ] ; then
-    mkdir -p "results_qa"
+OUTPUT_ROOT="results_qa"
+if [ ! -d $OUTPUT_ROOT ] ; then
+    mkdir -p "$OUTPUT_ROOT"
 fi
 
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
-    OUTPUT_PREF=results_qa/output_res_${MAX_TRAIN_SAMPLES}
+    OUTPUT_PREF=results_qa/
     
     for SEED in 0 1 2 ; do
     
-        out_dir=${OUTPUT_PREF}_1gpu/$SEED/
+        out_dir=${OUTPUT_ROOT}/1gpu/output_res_${MAX_TRAIN_SAMPLES}/SEED/
         rm -r -f $out_dir
         mkdir -p $out_dir
         python run_qa_no_trainer.py \
@@ -55,8 +43,8 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
           --output_dir $out_dir  2>&1|tee $out_dir/run.log
 
         # These runs for non-synchronous gradient descent
-        for local_sgd_steps in 1 2 4 8 16 32 64 ; do
-            out_dir=${OUTPUT_PREF}_nosync_steps_${local_sgd_steps}/$SEED
+        for local_sgd_steps in 1 2 4 8 16 24 32 64 ; do
+            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_nosync_steps_${local_sgd_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
     
@@ -75,8 +63,8 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
               --output_dir $out_dir  2>&1|tee $out_dir/run.log
         done
 
-        for grad_accum_steps in 1 2 4 8 16 32 64 ; do
-            out_dir=${OUTPUT_PREF}_accum_steps_${grad_accum_steps}/$SEED/
+        for grad_accum_steps in 1 2 4 8 16 24 32 64 ; do
+            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_accum_steps_${grad_accum_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
             accelerate launch  run_qa_no_trainer.py \
