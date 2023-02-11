@@ -44,7 +44,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
 
         # These runs for non-synchronous gradient descent
         for local_sgd_steps in 1 2 4 8 16 24 32 64 ; do
-            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_nosync_steps_${local_sgd_steps}/$SEED
+            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_nosync_steps_${local_sgd_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
     
@@ -64,7 +64,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
         done
 
         for grad_accum_steps in 1 2 4 8 16 24 32 64 ; do
-            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_accum_steps_${grad_accum_steps}/$SEED
+            out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_accum_steps_${grad_accum_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
             accelerate launch  run_qa_no_trainer.py \
