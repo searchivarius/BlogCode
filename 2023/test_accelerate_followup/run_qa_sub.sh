@@ -13,6 +13,11 @@ LOCAL_SGD_LR=6e-5
 GRAD_ACCUM_LR=6e-5
 
 gpu_qty=$(./print_accelerate_conf.sh |grep num_processes|cut -d \  -f 2)
+check_r=$(($BATCH_SIZE % $gpu_qty))
+if [ "$check_r" != "0" ] ; then
+  echo "The total batch size is not a multiple of the number of GPUs!"
+  exit 1
+fi
 # Let us use split_batches=True instead
 adjusted_batch_size=$BATCH_SIZE
 

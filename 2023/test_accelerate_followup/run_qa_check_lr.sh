@@ -7,8 +7,7 @@ conda activate test_accelerate
 BERT_MODEL=bert-large-uncased
 BATCH_SIZE=8
 
-gpu_qty=$(nvidia-smi -L|wc -l)
-
+gpu_qty=$(./print_accelerate_conf.sh |grep num_processes|cut -d \  -f 2)
 check_r=$(($BATCH_SIZE % $gpu_qty))
 if [ "$check_r" != "0" ] ; then
   echo "The total batch size is not a multiple of the number of GPUs!"
@@ -26,7 +25,7 @@ fi
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     for SEED in 0 1 2 ; do
       for curr_lr in 7.5e-6 1.5e-5 3e-5 6e-5 1.2e-4 2.4e-4 ; do
-        OUTPUT_PREF=results_qa_lr/lr_${curr_lr}/output_res_${MAX_TRAIN_SAMPLES}
+        OUTPUT_PREF=results_mnli_lr/lr_${curr_lr}/output_res_${MAX_TRAIN_SAMPLES}
 
         # These runs for non-synchronous gradient descent
         for local_sgd_steps in 1 ; do
