@@ -27,7 +27,6 @@ if [ ! -d $OUTPUT_ROOT ] ; then
 fi
 
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
-    OUTPUT_PREF=results_qa/
     
     for SEED in 0 1 2 ; do
     

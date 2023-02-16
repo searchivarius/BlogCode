@@ -23,15 +23,15 @@ adjusted_batch_size=$BATCH_SIZE
 #echo "Batch size adjusted for the number of GPUs (only for gradient accumulation with multiple GPUs) : $adjusted_batch_size"
 
 
-if [ ! -d "results_mnli" ] ; then
-    mkdir -p "results_mnli"
+if [ ! -d "results_mnli_lr" ] ; then
+    mkdir -p "results_mnli_lr"
 fi
 
 
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
   for SEED in 0 1 2 ; do
-    for curr_lr in 7.5e-6 1.5e-5 3e-5 6e-5 1.2e-4 2.4e-4 ; do
-        OUTPUT_PREF=results_qa_lr/lr_${curr_lr}/output_res_${MAX_TRAIN_SAMPLES}
+    for curr_lr in 0.5e-6 1e-5 2e-5 4e-5 8e-5 1.6e-4 ; do
+        OUTPUT_PREF=results_mnli_lr/lr_${curr_lr}/output_res_${MAX_TRAIN_SAMPLES}
     
         out_dir=${OUTPUT_PREF}_1gpu/$SEED/
         rm -r -f $out_dir
