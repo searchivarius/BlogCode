@@ -10,6 +10,7 @@ MAX_SEQ_LEN=128
 BERT_MODEL=bert-large-uncased
 
 BATCH_SIZE=32
+FP_TYPE=fp16
 
 ONE_GPU_LR=2e-5
 
@@ -29,7 +30,7 @@ if [ ! -d "results_mnli" ] ; then
 fi
 
 
-OUTPUT_ROOT=results_$TASK/
+OUTPUT_ROOT=results_${TASK}_${FP_TYPE}/
 for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     OUTPUT_PREF=output_res_${MAX_TRAIN_SAMPLES}
  
@@ -39,7 +40,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
         rm -r -f $out_dir
         mkdir -p $out_dir
         python run_glue_no_trainer.py \
-          --force_bf16 \
+          --force_${FP_TYPE} \
           --max_train_samples $MAX_TRAIN_SAMPLES \
           --model_name_or_path bert-large-uncased \
           --per_device_train_batch_size $BATCH_SIZE \
@@ -62,7 +63,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
             mkdir -p $out_dir
 
             accelerate launch  run_glue_no_trainer_local_sgd.py \
-              --force_bf16 \
+              --force_${FP_TYPE} \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --model_name_or_path bert-large-uncased \
               --per_device_train_batch_size $BATCH_SIZE \
@@ -87,7 +88,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
             mkdir -p $out_dir
 
             accelerate launch  run_glue_no_trainer.py \
-              --force_bf16 \
+              --force_${FP_TYPE} \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --model_name_or_path bert-large-uncased \
               --per_device_train_batch_size $BATCH_SIZE \
