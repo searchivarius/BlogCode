@@ -4,8 +4,10 @@ set -o pipefail
 
 conda activate test_accelerate
 
+TASK=qa
 BERT_MODEL=bert-large-uncased
 BATCH_SIZE=8
+FP_TYPE=fp16
 
 ONE_GPU_LR=3e-5
 
@@ -21,7 +23,8 @@ fi
 # Let us use split_batches=True instead
 adjusted_batch_size=$BATCH_SIZE
 
-OUTPUT_ROOT="results_qa"
+OUTPUT_ROOT=results_${TASK}_${FP_TYPE}/
+
 if [ ! -d $OUTPUT_ROOT ] ; then
     mkdir -p "$OUTPUT_ROOT"
 fi
@@ -34,7 +37,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
         rm -r -f $out_dir
         mkdir -p $out_dir
         python run_qa_no_trainer.py \
-          --force_bf16 \
+          --force_${FP_TYPE} \
           --max_train_samples $MAX_TRAIN_SAMPLES \
           --model_name_or_path bert-large-uncased \
           --per_device_train_batch_size $BATCH_SIZE \
@@ -54,7 +57,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     
             # The first run is on a single GPU and without gradient accumulation
             accelerate launch run_qa_no_trainer_local_sgd.py \
-              --force_bf16 \
+              --force_${FP_TYPE} \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --local_sgd_steps $local_sgd_steps \
               --model_name_or_path bert-large-uncased \
@@ -72,7 +75,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
             rm -r -f $out_dir
             mkdir -p $out_dir
             accelerate launch  run_qa_no_trainer.py \
-              --force_bf16 \
+              --force_${FP_TYPE} \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --model_name_or_path bert-large-uncased \
               --per_device_train_batch_size $adjusted_batch_size \
