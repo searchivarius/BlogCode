@@ -33,7 +33,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     
     for SEED in 0 1 2 ; do
     
-        out_dir=${OUTPUT_ROOT}/1gpu/output_res_${MAX_TRAIN_SAMPLES}/SEED/
+        out_dir=${OUTPUT_ROOT}/1gpu/output_res_${MAX_TRAIN_SAMPLES}/$SEED/
         rm -r -f $out_dir
         mkdir -p $out_dir
         python run_qa_no_trainer.py \
