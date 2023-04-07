@@ -1,5 +1,5 @@
 {
-    "eval_exact_match": 80.0,
-    "eval_f1": 88.05394176502945,
-    "eval_train_time": 1391.5381774902344
+    "eval_exact_match": 79.12961210974456,
+    "eval_f1": 87.68994047125507,
+    "eval_train_time": 1303.908495426178
 }

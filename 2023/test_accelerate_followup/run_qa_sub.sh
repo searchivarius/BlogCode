@@ -7,7 +7,7 @@ conda activate test_accelerate
 TASK=qa
 BERT_MODEL=bert-large-uncased
 BATCH_SIZE=8
-FP_TYPE=fp16
+FP_TYPE=bf16
 
 ONE_GPU_LR=3e-5
 
@@ -50,7 +50,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
           --output_dir $out_dir  2>&1|tee $out_dir/run.log
 
         # These runs for non-synchronous gradient descent
-        for local_sgd_steps in 1 2 4 8 16 24 32 64 ; do
+        for local_sgd_steps in 1 2 4 8 16 24 32 64 128 256 512 ; do
             out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_nosync_steps_${local_sgd_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
@@ -70,7 +70,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
               --output_dir $out_dir  2>&1|tee $out_dir/run.log
         done
 
-        for grad_accum_steps in 1 2 4 8 16 24 32 64 ; do
+        for grad_accum_steps in 1 2 4 8 16 24 32 64 128 256 512 ; do
             out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_accum_steps_${grad_accum_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir

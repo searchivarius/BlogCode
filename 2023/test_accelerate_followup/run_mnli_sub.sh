@@ -10,7 +10,7 @@ MAX_SEQ_LEN=128
 BERT_MODEL=bert-large-uncased
 
 BATCH_SIZE=32
-FP_TYPE=fp16
+FP_TYPE=bf16
 
 ONE_GPU_LR=2e-5
 
@@ -23,7 +23,7 @@ if [ "$check_r" != "0" ] ; then
   echo "The total batch size is not a multiple of the number of GPUs!"
   exit 1
 fi
-
+batch_size_grad_accum=$(($BATCH_SIZE / $gpu_qty))
 
 if [ ! -d "results_mnli" ] ; then
     mkdir -p "results_mnli"
@@ -57,7 +57,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
           --output_dir $out_dir  2>&1|tee $out_dir/run.log
 
         # These runs for non-synchronous gradient descent
-        for local_sgd_steps in 1 2 4 8 16 32 64 ; do
+        for local_sgd_steps in 1 2 4 8 16 32 64 128 256 512 ; do
             out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_nosync_steps_${local_sgd_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
@@ -82,7 +82,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
     
         done
 
-        for grad_accum_steps in 1 2 4 8 16 32 64 ; do
+        for grad_accum_steps in 1 2 4 8 16 32 64 128 256 512 ; do
             out_dir=${OUTPUT_ROOT}/${gpu_qty}gpus/output_res_${MAX_TRAIN_SAMPLES}_accum_steps_${grad_accum_steps}/$SEED
             rm -r -f $out_dir
             mkdir -p $out_dir
@@ -91,7 +91,7 @@ for MAX_TRAIN_SAMPLES in 4000 40000 ; do
               --force_${FP_TYPE} \
               --max_train_samples $MAX_TRAIN_SAMPLES \
               --model_name_or_path bert-large-uncased \
-              --per_device_train_batch_size $BATCH_SIZE \
+              --per_device_train_batch_size $batch_size_grad_accum \
               --gradient_accumulation_steps $grad_accum_steps \
               \
               --task_name $TASK \
